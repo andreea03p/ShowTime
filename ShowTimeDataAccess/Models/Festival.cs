@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ShowTimeDataAccess.Models;
+namespace ShowTime.DataAccess.Models;
 
-public class Festivals
+public class Festival
 {
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
@@ -18,4 +18,6 @@ public class Festivals
 
     public ICollection<Lineup> Lineups { get; set; } = new List<Lineup>();
     public ICollection<Artist> Artists { get; set; } = new List<Artist>();
+    public ICollection<Booking> Bookings { get; set; } = new List<Booking>();
+    public ICollection<User> Users { get; set; } = new List<User>();
 }

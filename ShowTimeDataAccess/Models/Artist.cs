@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ShowTimeDataAccess.Models;
+namespace ShowTime.DataAccess.Models;
 
 public class Artist
 {
@@ -14,5 +14,5 @@ public class Artist
     public string Genre { get; set; } = string.Empty;
 
     public ICollection<Lineup> Lineups { get; set; } = new List<Lineup>(); 
-    public ICollection<Festivals> Festivals { get; set; } = new List<Festivals>();
+    public ICollection<Festival> Festivals { get; set; } = new List<Festival>();
 }

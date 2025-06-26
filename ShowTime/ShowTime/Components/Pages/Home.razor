@@ -1,7 +1,24 @@
 ﻿@page "/"
-
 <PageTitle>Home</PageTitle>
 
-<h1>Hello, world!</h1>
-
-Welcome to your new app.
+<div class="home-container" >
+    <div class="content-wrapper">
+        <div class="logo-container">
+            <svg width="120" height="120" viewBox="0 0 120 120" class="logo">
+                <defs>
+                    <pattern id="imagePattern" patternUnits="objectBoundingBox" width="1" height="1">
+                        <image href="images/fest.svg" x="0" y="0" width="120" height="120" />
+                    </pattern>
+                    <linearGradient id="silverGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:#E5E5E5;stop-opacity:1" />
+                        <stop offset="50%" style="stop-color:#C0C0C0;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#A8A8A8;stop-opacity:1" />
+                    </linearGradient>
+                </defs>
+                <circle cx="60" cy="60" r="50" fill="url(#imagePattern)" stroke="url(#silverGradient)" stroke-width="3" />
+            </svg>
+        </div>
+        <h1 class="welcome-title">Hello, world!</h1>
+        <p class="welcome-text">Welcome to your new app.</p>
+    </div>
+</div>

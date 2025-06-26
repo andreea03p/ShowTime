@@ -1,28 +1,38 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using ShowTimeDataAccess.Models;
+using ShowTime.DataAccess.Models;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using ShowTimeDataAccess.Models;
 
 
-namespace ShowTimeDataAccess.Configurations;
+namespace ShowTime.DataAccess.Configurations;
 
 public class ArtistConfiguration : IEntityTypeConfiguration<Artist>
 {
     public void Configure(EntityTypeBuilder<Artist> builder)
     {
         builder.ToTable("Artists");
+
         builder.HasKey(a => a.Id);
+
         builder.Property(a => a.Name)
             .IsRequired()
-            .HasMaxLength(255);
+            .HasMaxLength(50);
 
-        builder.HasMany(a => a.Festivals)
-            .WithMany(f => f.Artists)
-            .UsingEntity<Lineup>();
+        builder.Property(a => a.Genre)
+            .IsRequired()
+            .HasMaxLength(50);
+
+        builder.Property(a => a.Image)
+            .IsRequired();
+
+
+
+        builder.HasMany(a => a.Lineups)
+            .WithOne(l => l.Artist)
+            .HasForeignKey(l => l.ArtistId);
     }
 }

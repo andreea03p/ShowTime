@@ -5,7 +5,7 @@ VisualStudioVersion = 17.14.36212.18
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShowTime", "ShowTime\ShowTime\ShowTime.csproj", "{7AC4F61A-6E73-451D-9775-C92C9CF69F72}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShowTimeDataAccess", "ShowTimeDataAccess\ShowTimeDataAccess.csproj", "{ABD6176C-E8C2-4A7E-91AB-C963508595A3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShowTime.DataAccess", "ShowTimeDataAccess\ShowTime.DataAccess.csproj", "{ABD6176C-E8C2-4A7E-91AB-C963508595A3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
