@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ShowTime.DataAccess.Models.Enums;
+
 
 namespace ShowTime.DataAccess.Models;
 
@@ -12,6 +14,8 @@ public class Artist
     public string Name { get; set; } = string.Empty;
     public string Image { get; set; } = string.Empty;
     public string Genre { get; set; } = string.Empty;
+    public Role Role { get; set; }
+
 
     public ICollection<Lineup> Lineups { get; set; } = new List<Lineup>(); 
     public ICollection<Festival> Festivals { get; set; } = new List<Festival>();

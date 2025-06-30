@@ -24,9 +24,5 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .IsRequired()
             .HasMaxLength(50);
 
-
-        builder.HasMany(u => u.Bookings)
-            .WithOne(b => b.User)
-            .HasForeignKey(b => b.UserId);
     }
 }

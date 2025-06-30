@@ -1,24 +1,32 @@
 ﻿@page "/"
 <PageTitle>Home</PageTitle>
 
-<div class="home-container" >
+<div class="home-container">
+    <div class="background-overlay"></div>
     <div class="content-wrapper">
-        <div class="logo-container">
-            <svg width="120" height="120" viewBox="0 0 120 120" class="logo">
+        <div
+            <svg width="300" height="300" viewBox="0 0 300 300" class="logo">
                 <defs>
-                    <pattern id="imagePattern" patternUnits="objectBoundingBox" width="1" height="1">
-                        <image href="images/fest.svg" x="0" y="0" width="120" height="120" />
-                    </pattern>
+                    <clipPath id="circleView">
+                        <circle cx="150" cy="150" r="140" />
+                    </clipPath>
+
                     <linearGradient id="silverGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" style="stop-color:#E5E5E5;stop-opacity:1" />
-                        <stop offset="50%" style="stop-color:#C0C0C0;stop-opacity:1" />
-                        <stop offset="100%" style="stop-color:#A8A8A8;stop-opacity:1" />
+                        <stop offset="0%" stop-color="#E5E5E5" />
+                        <stop offset="50%" stop-color="#C0C0C0" />
+                        <stop offset="100%" stop-color="#A7A8A8" />
                     </linearGradient>
                 </defs>
-                <circle cx="60" cy="60" r="50" fill="url(#imagePattern)" stroke="url(#silverGradient)" stroke-width="3" />
+
+                <circle cx="150" cy="150" r="140" fill="none" stroke="url(#silverGradient)" stroke-width="4" />
+
+                <image href="images/logo.png"
+                       x="0" y="0" width="300" height="300"
+                       preserveAspectRatio="xMidYMid slice"
+                       clip-path="url(#circleView)" />
             </svg>
         </div>
-        <h1 class="welcome-title">Hello, world!</h1>
-        <p class="welcome-text">Welcome to your new app.</p>
+        <h1 class="welcome-title">Your Access Gate To Every Beat</h1>
+        <p class="welcome-text">~find your festival and secure your experience~</p>
     </div>
 </div>

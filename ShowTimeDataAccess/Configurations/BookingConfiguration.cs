@@ -23,14 +23,6 @@ public class BookingConfiguration : IEntityTypeConfiguration<Booking>
             .IsRequired()
             .HasColumnType("decimal(5,2)");
 
-
-        builder.HasOne(b => b.User)
-            .WithMany(u => u.Bookings)
-            .HasForeignKey(b => b.UserId);
-
-        builder.HasOne(b => b.Festival)
-            .WithMany(f => f.Bookings)
-            .HasForeignKey(b => b.FestivalId);
     }
 }
 

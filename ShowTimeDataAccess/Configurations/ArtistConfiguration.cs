@@ -28,11 +28,5 @@ public class ArtistConfiguration : IEntityTypeConfiguration<Artist>
 
         builder.Property(a => a.Image)
             .IsRequired();
-
-
-
-        builder.HasMany(a => a.Lineups)
-            .WithOne(l => l.Artist)
-            .HasForeignKey(l => l.ArtistId);
     }
 }

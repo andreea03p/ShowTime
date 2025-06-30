@@ -1,17 +1,22 @@
 using ShowTime.Components;
+using ShowTime.DataAccess;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container - for Blazor Web App supporting both modes
 builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents()
-    .AddInteractiveWebAssemblyComponents();
+    .AddInteractiveWebAssemblyComponents()
+    .AddInteractiveServerComponents();
 
 builder.Services.AddControllers();
 
+var connectionString = builder.Configuration.GetConnectionString("ShowTimeContext");
+builder.Services.AddDbContext<ShowTimeDbContext>(options => 
+    options.UseSqlServer(connectionString));
+
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+
 if (app.Environment.IsDevelopment())
 {
     app.UseWebAssemblyDebugging();

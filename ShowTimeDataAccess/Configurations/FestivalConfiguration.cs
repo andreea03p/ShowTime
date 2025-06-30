@@ -46,13 +46,10 @@ public class FestivalConfiguration : IEntityTypeConfiguration<Festival>
             .WithMany(a => a.Festivals)
             .UsingEntity<Lineup>();
 
-        builder.HasMany(f => f.Lineups)
-            .WithOne(l => l.Festival)
-            .HasForeignKey(l => l.FestivalId);
 
-        builder.HasMany(f => f.Bookings)
-            .WithOne(b => b.Festival)
-            .HasForeignKey(b => b.FestivalId);
+        builder.HasMany(f => f.Users)
+            .WithMany(b => b.Festivals)
+            .UsingEntity<Booking>();
 
     }
 }

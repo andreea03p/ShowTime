@@ -12,7 +12,6 @@ public class User
     public string Username { get; set; } = string.Empty;
     public string Password { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public ICollection<Booking> Bookings { get; set; } = new List<Booking>();
     public ICollection<Festival> Festivals { get; set; } = new List<Festival>();

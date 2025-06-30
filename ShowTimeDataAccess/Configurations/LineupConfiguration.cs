@@ -25,13 +25,5 @@ public class LineupConfiguration : IEntityTypeConfiguration<Models.Lineup>
             .IsRequired()
             .HasColumnType("datetime");
 
-
-        builder.HasOne(l => l.Festival)
-            .WithMany(f => f.Lineups)
-            .HasForeignKey(l => l.FestivalId);
-
-        builder.HasOne(l => l.Artist)
-            .WithMany(a => a.Lineups)
-            .HasForeignKey(l => l.ArtistId);
     }
 }
