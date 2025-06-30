@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -16,6 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\ShowTime.BusinessLogic\ShowTime.BusinessLogic.csproj" />
     <ProjectReference Include="..\..\ShowTimeDataAccess\ShowTime.DataAccess.csproj" />
   </ItemGroup>
 

@@ -14,7 +14,6 @@ public class Artist
     public string Name { get; set; } = string.Empty;
     public string Image { get; set; } = string.Empty;
     public string Genre { get; set; } = string.Empty;
-    public Role Role { get; set; }
 
 
     public ICollection<Lineup> Lineups { get; set; } = new List<Lineup>(); 

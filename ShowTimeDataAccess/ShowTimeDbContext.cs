@@ -1,12 +1,13 @@
 ﻿
+using Microsoft.EntityFrameworkCore;
+using ShowTime.DataAccess.Configurations;
+using ShowTime.DataAccess.Models;
+using ShowTime.DataAccess.Models.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using ShowTime.DataAccess.Models;
-using Microsoft.EntityFrameworkCore;
-using ShowTime.DataAccess.Configurations;
 
 namespace ShowTime.DataAccess;
 
@@ -30,6 +31,32 @@ public class ShowTimeDbContext : Microsoft.EntityFrameworkCore.DbContext
         modelBuilder.ApplyConfiguration(new LineupConfiguration());
         modelBuilder.ApplyConfiguration(new BookingConfiguration());
         modelBuilder.ApplyConfiguration(new UserConfiguration());
+
+
+
+        modelBuilder.Entity<Artist>().HasData(new Artist
+        {
+            Id = 2,
+            Name = "Lady Gaga",
+            Image = "",
+            Genre = "Pop"
+        });
+
+        modelBuilder.Entity<Artist>().HasData(new Artist
+        {
+            Id = 3,
+            Name = "Måneskin",
+            Image = "",
+            Genre = "Rock"
+        });
+
+        modelBuilder.Entity<Artist>().HasData(new Artist
+        {
+            Id = 1,
+            Name = "Dua Lipa",
+            Image = "https://cdn.dc5.ro/img-prod/1981989-0.jpeg",
+            Genre = "Pop",
+        });
 
         modelBuilder.Entity<Festival>().HasData(new Festival
         {
