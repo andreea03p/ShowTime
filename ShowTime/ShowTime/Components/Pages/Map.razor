@@ -1,0 +1,30 @@
+﻿@page "/map"
+@inject IJSRuntime JSRuntime
+@implements IAsyncDisposable
+
+<h3>Blazor Map</h3>
+
+<div id=" = "map" style=" = "width:800px; height:600px;"></div>
+
+@code {
+    private IJSObjectReference? module;
+
+    private string? result;
+
+    public ValueTask DisposeAsync()
+    {
+        throw new NotImplementedException();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if(firstRender)
+        {
+            module = await JSRuntime.InvokeAsync<IJSObjectReference>("import", "./leafletma");
+            if(module!= null)
+            {
+                result = await module.InvokeAsync<string>("load_map");
+            }
+        }
+    }
+}
