@@ -1,7 +1,443 @@
 ﻿@page "/Festivals"
+@using ShowTime.BusinessLogic.Abstraction
+@using ShowTime.BusinessLogic.Dtos
+@inject IFestivalService FestivalService
+@rendermode InteractiveServer
 
-<h3>Map</h3>
+
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body, html {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        overflow-x: hidden;
+        background: linear-gradient(135deg, rgba(0,0,0,0.7), rgba(0,0,0,0.4)), url('/images/background.jpg') center/cover;
+    }
+
+    .festivals-container {
+        min-height: 100vh;
+        width: 100%;
+        padding: 0;
+        margin: 0;
+        position: relative;
+        background-attachment: fixed;
+        background-repeat: repeat;
+        background-size: cover;
+        background: linear-gradient(135deg, rgba(0,0,0,0.7), rgba(0,0,0,0.4)), url('/images/background.jpg') center/cover;
+    }
+
+    .content-wrapper {
+        padding: 20px 20px 20px 20px;
+        width: 100%;
+        height: 100%;
+    }
+
+    .form-section {
+        color: antiquewhite;
+        background: linear-gradient(135deg, black, white);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+
+        .form-section h3 {
+            color: #91C8E4;
+            margin-bottom: 20px;
+            font-weight: 600;
+            text-shadow: 1px 1px 2px rgba(255,255,255,0.5);
+        }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: white;
+            font-weight: 500;
+        }
+
+    .form-control {
+        width: 100%;
+        padding: 10px 15px;
+        border: 2px solid rgba(255,255,255,0.3);
+        border-radius: 8px;
+        background: rgba(255,255,255,0.8);
+        transition: all 0.3s ease;
+    }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #3498db;
+            background: rgba(255,255,255,0.95);
+            box-shadow: 0 0 0 3px rgba(52,152,219,0.1);
+        }
+
+
+    .btn-custom {
+        background: linear-gradient(135deg, #3498db, #2980b9);
+        color: white;
+        border: none;
+        padding: 12px 25px;
+        border-radius: 8px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(52,152,219,0.3);
+        margin-right: 10px;
+    }
+
+        .btn-custom:hover {
+            background: linear-gradient(135deg, #2980b9, #1abc9c);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52,152,219,0.4);
+        }
+
+        .btn-custom:disabled {
+            background: linear-gradient(135deg, #bdc3c7, #95a5a6);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+    .btn-delete {
+        background: linear-gradient(135deg, #2D4F2B, #708A58);
+        border-radius: 12px;
+    }
+
+        .btn-delete:hover {
+            background: linear-gradient(135deg, #708A58, #FFB823);
+        }
+
+
+    .festivals-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 25px;
+        margin-top: 20px;
+    }
+
+    .festival-card {
+        background: linear-gradient(50deg, black, #06402B);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        border: 1px solid rgba(255,255,255,0.3);
+        transition: all 0.3s ease;
+        overflow: hidden;
+        position: relative;
+        display: flex;
+        flex-direction: column; /* Changed from row to column */
+        align-items: center;
+        gap: 15px;
+        min-height: 350px;
+        text-align: center; /* Changed back to center */
+    }
+
+        .festival-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #3498db, #1abc9c, #3498db);
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite;
+        }
+
+        .festival-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+        }
+
+    .fest-image {
+        width: 250px;
+        height: 160px;
+        object-fit: cover;
+        border-radius: 15px;
+        flex-shrink: 0;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        transition: all 0.3s ease;
+    }
+
+        .fest-image:hover {
+            transform: scale(1.05);
+        }
+
+    .festival-name {
+        font-size: 1.4em;
+        font-weight: 600;
+        color: white;
+        margin-bottom: 8px;
+    }
+
+    .festival-genre {
+        color: white;
+        font-style: italic;
+        font-size: 1.1em;
+        padding: 5px 15px;
+        background: rgba(255,255,255,0.6);
+        border-radius: 20px;
+        display: inline-block;
+        margin-bottom: 15px;
+    }
+
+    .no-festivals {
+        text-align: center;
+        color: #ecf0f1;
+        font-size: 1.3em;
+        background: rgba(0,0,0,0.3);
+        padding: 40px;
+        border-radius: 15px;
+        backdrop-filter: blur(5px);
+    }
+
+    .page-title {
+        text-align: center;
+        color: #0F4D0F;
+        font-size: 2.5em;
+        margin-top: 0;
+        margin-bottom: 40px;
+        text-shadow: 1px 1px 1px white;
+        position: relative;
+        z-index: 10;
+    }
+
+    .forms-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .fest-name {
+        font-style: italic;
+        font-weight: bold;
+        font-size: 1.8em;
+        text-shadow: 1px 1px 2px rgba(0,255,0,0.5);
+    }
+
+</style>
+
+
+<div class="festivals-container">
+    <div class="content-wrapper">
+        <h1 class="page-title">Festivals Management</h1>
+
+        <div class="forms-container">
+            <div class="form-section">
+                <h3>Add New Festival</h3>
+                <EditForm Model="newFestival" OnSubmit="AddFestival" FormName="AddFestivalForm">
+                    <div class="form-group">
+                        <label>Festival Name</label>
+                        <InputText @bind-Value="newFestival.Name" class="form-control"></InputText>
+                    </div>
+                    <div class="form-group">
+                        <label>Festival Start Date</label>
+                        <InputDate @bind-Value="newFestival.StartDate" class="form-control"></InputDate>
+                    </div>
+                    <div class="form-group">
+                        <label>Festival End Date</label>
+                        <InputDate @bind-Value="newFestival.EndDate" class="form-control"></InputDate>
+                    </div>
+                    <div class="form-group">
+                        <label>Festival Address</label>
+                        <InputText @bind-Value="newFestival.Address" class="form-control"></InputText>
+                    </div>
+                    <div class="form-group">
+                        <label>Festival Latitude</label>
+                        <InputNumber @bind-Value="newFestival.Latitude" class="form-control"></InputNumber>
+                    </div>
+                    <div class="form-group">
+                        <label>Festival Longitude</label>
+                        <InputNumber @bind-Value="newFestival.Longitude" class="form-control"></InputNumber>
+                    </div>
+                    <div class="form-group">
+                        <label>Festival SplashArt</label>
+                        <InputText @bind-Value="newFestival.SplashArt" class="form-control"></InputText>
+                    </div>
+                    <div class="form-group">
+                        <label>Festival Capacity</label>
+                        <InputNumber @bind-Value="newFestival.Capacity" class="form-control"></InputNumber>
+                    </div>
+                    <button type="submit" class="btn-custom">Add Festival</button>
+                </EditForm>
+            </div>
+
+            <div class="form-section">
+                <h3>Update Festival</h3>
+                <p>Select festival to update from the DropDownList</p>
+
+                <select class="form-control" @onchange="OnFestivalSelected">
+                    <option value="">-- Select a Festival --</option>
+                    @foreach (var festival in festivals)
+                    {
+                        <option value="@festival.Id">@festival.Name</option>
+                    }
+                </select>
+
+                <EditForm Model="updatedFestival" OnSubmit="UpdateFestival" FormName="UpdateFestivalForm">
+                    <div class="form-group">
+                        <label>Festival Name</label>
+                        <InputText @bind-Value="updatedFestival.Name" class="form-control"></InputText>
+                    </div>
+                    <div class="form-group">
+                        <label>Festival Start Date</label>
+                        <InputDate @bind-Value="updatedFestival.StartDate" class="form-control"></InputDate>
+                    </div>
+                    <div class="form-group">
+                        <label>Festival End Date</label>
+                        <InputDate @bind-Value="updatedFestival.EndDate" class="form-control"></InputDate>
+                    </div>
+                    <div class="form-group">
+                        <label>Festival Address</label>
+                        <InputText @bind-Value="updatedFestival.Address" class="form-control"></InputText>
+                    </div>
+                    <div class="form-group">
+                        <label>Festival Latitude</label>
+                        <InputNumber @bind-Value="updatedFestival.Latitude" class="form-control"></InputNumber>
+                    </div>
+                    <div class="form-group">
+                        <label>Festival Longitude</label>
+                        <InputNumber @bind-Value="updatedFestival.Longitude" class="form-control"></InputNumber>
+                    </div>
+                    <div class="form-group">
+                        <label>Festival SplashArt</label>
+                        <InputText @bind-Value="updatedFestival.SplashArt" class="form-control"></InputText>
+                    </div>
+                    <div class="form-group">
+                        <label>Festival Capacity</label>
+                        <InputNumber @bind-Value="updatedFestival.Capacity" class="form-control"></InputNumber>
+                    </div>
+                    <button type="submit" class="btn-custom" disabled="@(selectedFestivalId == 0)">
+                        Update Festival
+                    </button>
+                </EditForm>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3>Festivals</h3>
+            @if (festivals.Count == 0)
+            {
+                <div class="no-festivals">
+                    <p>No festivals yet.</p>
+                </div>
+            }
+            else
+            {
+                <div class="festivals-grid">
+                    @foreach (var fest in festivals)
+                    {
+                        <div class="festival-card">
+                            <img src="@fest.SplashArt" alt="@fest.Name" class="fest-image" />
+                            <div class="fest-name">@fest.Name</div>
+                            <div class="fest-start">
+                                <i class="bi bi-calendar"></i>
+                                @fest.StartDate.ToString("dd-MM-yyyy") - @fest.EndDate.ToString("dd-MM-yyyy")
+                            </div>
+                            <div class="fest-location">
+                                <i class="bi bi-geo"></i>
+                                @fest.Address
+                            </div>
+                            <div class="fest-price">
+                                <i class="bi bi-currency-exchange"></i>
+                                from $
+                            </div>
+
+                            <button type="button" class="btn-custom btn-delete" onclick="window.location.href='tickets'">
+                                <i class="bi bi-ticket-detailed-fill"></i>
+                                Tickets
+                            </button>
+
+                            <button type="button" class="btn-custom btn-delete" @onclick="() => DeleteFestival(fest.Id)">
+                                Delete Festival
+                            </button>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>
 
 @code {
+    private IList<FestivalGetDto> festivals = new List<FestivalGetDto>();
 
+    [SupplyParameterFromForm]
+    private FestivalCreateDto newFestival { get; set; } = new FestivalCreateDto();
+
+    [SupplyParameterFromForm]
+    private FestivalUpdateDto updatedFestival { get; set; } = new FestivalUpdateDto();
+
+    private int selectedFestivalId = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        festivals = await FestivalService.GetAllFestivalsAsync();
+    }
+
+    private async Task AddFestival()
+    {
+        await FestivalService.AddFestivalAsync(newFestival);
+        newFestival = new FestivalCreateDto();
+        festivals = await FestivalService.GetAllFestivalsAsync();
+    }
+
+    private async Task DeleteFestival(int id)
+    {
+        await FestivalService.DeleteFestivalAsync(id);
+        festivals = await FestivalService.GetAllFestivalsAsync();
+    }
+
+    private async Task OnFestivalSelected(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int festivalId) && festivalId > 0)
+        {
+            selectedFestivalId = festivalId;
+            var selectedFestival = await FestivalService.GetFestivalByIdAsync(festivalId);
+
+            if (selectedFestival != null)
+            {
+                updatedFestival.Name = selectedFestival.Name;
+                updatedFestival.StartDate = selectedFestival.StartDate;
+                updatedFestival.EndDate = selectedFestival.EndDate;
+                updatedFestival.Address = selectedFestival.Address;
+                updatedFestival.Latitude = selectedFestival.Latitude;
+                updatedFestival.Longitude = selectedFestival.Longitude;
+                updatedFestival.SplashArt = selectedFestival.SplashArt;
+                updatedFestival.Capacity = selectedFestival.Capacity;
+                StateHasChanged();
+            }
+        }
+        else
+        {
+            selectedFestivalId = 0;
+            updatedFestival = new FestivalUpdateDto();
+            StateHasChanged();
+        }
+    }
+
+    private async Task UpdateFestival()
+    {
+        if (selectedFestivalId > 0)
+        {
+            await FestivalService.UpdateFestivalAsync(updatedFestival, selectedFestivalId);
+            updatedFestival = new FestivalUpdateDto();
+            selectedFestivalId = 0;
+            festivals = await FestivalService.GetAllFestivalsAsync();
+            StateHasChanged();
+        }
+    }
 }

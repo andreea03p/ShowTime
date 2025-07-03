@@ -13,4 +13,5 @@ public interface IArtistService
     Task<IList<ArtistGetDto>> GetAllArtistsAsync();
     Task AddArtistAsync(ArtistCreateDto artist);   
     Task UpdateArtistAsync(ArtistUpdateDto artist, int id);
+    Task DeleteArtistAsync(int id);
 }

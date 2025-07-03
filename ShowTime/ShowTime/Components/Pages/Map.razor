@@ -1,30 +1,72 @@
 ﻿@page "/map"
 @inject IJSRuntime JSRuntime
 @implements IAsyncDisposable
+@rendermode InteractiveServer
 
-<h3>Blazor Map</h3>
-
-<div id=" = "map" style=" = "width:800px; height:600px;"></div>
-
-@code {
-    private IJSObjectReference? module;
-
-    private string? result;
-
-    public ValueTask DisposeAsync()
-    {
-        throw new NotImplementedException();
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
     }
 
+    body, html {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        overflow-x: hidden;
+        background: linear-gradient(135deg, rgba(0,0,0,0.7), rgba(0,0,0,0.4)), url('/images/background.jpg') center/cover;
+    }
+
+    .title{
+        justify-content: center;
+        text-align: center;
+        color: #0F4D0F;
+        font-size: 3em;
+        margin-top: 0;
+        margin-bottom: 40px;
+        text-shadow: 1px 1px 1px white;
+        position: relative;
+        z-index: 10;
+    }
+
+
+</style>
+
+<div class = "title">
+    <h3>Festivals Map</h3>
+</div>
+    
+
+<div id="map" style="height: 500px; width: 100%;"></div>
+
+
+@code {
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if(firstRender)
+        if (firstRender)
         {
-            module = await JSRuntime.InvokeAsync<IJSObjectReference>("import", "./leafletma");
-            if(module!= null)
+            try
             {
-                result = await module.InvokeAsync<string>("load_map");
+                await Task.Delay(100);
+                await JSRuntime.InvokeVoidAsync("initMap");
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error initializing map: {ex.Message}");
+            }
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("disposeMap");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error disposing map: {ex.Message}");
         }
     }
 }

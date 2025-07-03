@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ShowTime.DataAccess;
 
@@ -11,9 +12,11 @@ using ShowTime.DataAccess;
 namespace ShowTime.DataAccess.Migrations
 {
     [DbContext(typeof(ShowTimeDbContext))]
-    partial class ShowTimeDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250702150755_loction")]
+    partial class loction
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -47,6 +50,29 @@ namespace ShowTime.DataAccess.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Artists", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 2,
+                            Genre = "Pop",
+                            Image = "",
+                            Name = "Lady Gaga"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Genre = "Rock",
+                            Image = "",
+                            Name = "Måneskin"
+                        },
+                        new
+                        {
+                            Id = 1,
+                            Genre = "Pop",
+                            Image = "https://cdn.dc5.ro/img-prod/1981989-0.jpeg",
+                            Name = "Dua Lipa"
+                        });
                 });
 
             modelBuilder.Entity("ShowTime.DataAccess.Models.Booking", b =>
@@ -60,7 +86,10 @@ namespace ShowTime.DataAccess.Migrations
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(5,2)");
 
-                    b.Property<string>("TicketType")
+                    b.Property<int>("TicketType")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Type")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
@@ -147,10 +176,8 @@ namespace ShowTime.DataAccess.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
-                    b.Property<string>("Role")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                    b.Property<int>("Role")
+                        .HasColumnType("int");
 
                     b.Property<string>("Username")
                         .IsRequired()

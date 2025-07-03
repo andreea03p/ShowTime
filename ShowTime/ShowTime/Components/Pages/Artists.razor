@@ -1,38 +1,306 @@
-﻿
-@page "/Artists"
+﻿@page "/Artists"
 @using ShowTime.BusinessLogic.Abstraction
 @using ShowTime.BusinessLogic.Dtos
 @inject IArtistService ArtistService
+@rendermode InteractiveServer
 
-<h3>Add new artist</h3>
-<EditForm Model="newArtist" OnSubmit="AddArtist" FormName="AddArtistForm">
-    <label>Artist Name</label>
-    <InputText @bind-Value="newArtist.Name"></InputText>
-    <label>Artist Genre</label>
-    <InputText @bind-Value="newArtist.Genre"></InputText>
-    <label>Artist Image</label>
-    <InputText @bind-Value="newArtist.Image"></InputText>
-    <button class="btn btn-primary">Add Artist</button>
-</EditForm>
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
 
-<h3>Artists</h3>
+    body, html {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        overflow-x: hidden;
+        background: linear-gradient(135deg, rgba(0,0,0,0.7), rgba(0,0,0,0.4)), url('/images/background.jpg') center/cover;
+    }
 
-@if (artists.Count == 0)
-{
-    <p>No artists yet.</p>
-}
-else
-{
-    <div class="row">
-        @foreach (var artist in artists)
-        {
-            <p>@artist.Name</p>
-            <p>@artist.Genre</p>
-            <image src="@artist.Image" alt="@artist.Name" style="width: 200px; height: 200px"></image>
+    .artists-container {
+        min-height: 100vh;
+        width: 100%;
+        padding: 0;
+        margin: 0;
+        position: relative;
+        background-attachment: fixed;
+        background-repeat: repeat;
+        background-size: cover;
+        background: linear-gradient(135deg, rgba(0,0,0,0.7), rgba(0,0,0,0.4)), url('/images/background.jpg') center/cover;
+    }
+
+    content-wrapper {
+        padding: 80px 20px 20px 20px;
+        width: 100%;
+        height: 100%;
+    }
+
+    .form-section {
+        color:antiquewhite;
+        background: linear-gradient(135deg, black, white);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+
+        .form-section h3 {
+            color: #91C8E4;
+            margin-bottom: 20px;
+            font-weight: 600;
+            text-shadow: 1px 1px 2px rgba(255,255,255,0.5);
         }
-    </div>
-}
 
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: white;
+            font-weight: 500;
+        }
+
+    .form-control {
+        width: 100%;
+        padding: 10px 15px;
+        border: 2px solid rgba(255,255,255,0.3);
+        border-radius: 8px;
+        background: rgba(255,255,255,0.8);
+        transition: all 0.3s ease;
+    }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #3498db;
+            background: rgba(255,255,255,0.95);
+            box-shadow: 0 0 0 3px rgba(52,152,219,0.1);
+        }
+
+
+    .btn-custom {
+        background: linear-gradient(135deg, #3498db, #2980b9);
+        color: white;
+        border: none;
+        padding: 12px 25px;
+        border-radius: 8px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(52,152,219,0.3);
+        margin-right: 10px;
+    }
+
+        .btn-custom:hover {
+            background: linear-gradient(135deg, #2980b9, #1abc9c);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52,152,219,0.4);
+        }
+
+        .btn-custom:disabled {
+            background: linear-gradient(135deg, #bdc3c7, #95a5a6);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+    .btn-delete {
+        background: linear-gradient(135deg, #2D4F2B, #708A58);
+        border-radius: 12px;
+    }
+
+        .btn-delete:hover {
+            background: linear-gradient(135deg, #708A58, #FFB823);
+        }
+
+
+    .artists-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 25px;
+        margin-top: 20px;
+    }
+    .artist-card {
+        background: linear-gradient(50deg, black, #06402B);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 20px;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        border: 1px solid rgba(255,255,255,0.3);
+        transition: all 0.3s ease;
+        overflow: hidden;
+        position: relative;
+    }
+
+        .artist-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #3498db, #1abc9c, #3498db);
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite;
+        }
+
+        .artist-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+        }
+
+    .artist-image {
+        width: 100%;
+        height: 250px;
+        object-fit: cover;
+        border-radius: 15px;
+        margin-bottom: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        transition: all 0.3s ease;
+    }
+
+        .artist-image:hover {
+            transform: scale(1.05);
+        }
+
+    .artist-name {
+        font-size: 1.4em;
+        font-weight: 600;
+        color: white;
+        margin-bottom: 8px;
+        text-shadow: 0 0 5px rgba(255, 255, 255, 0.5), 0 0 10px rgba(255, 255, 255, 0.6), 0 0 15px rgba(255, 255, 255, 0.7), 0 0 20px rgba(255, 255, 255, 0.8);
+    }
+
+    .artist-genre {
+        color: white;
+        font-style: italic;
+        font-size: 1.1em;
+        padding: 5px 15px;
+        background: rgba(255,255,255,0.6);
+        border-radius: 20px;
+        display: inline-block;
+        margin-bottom: 15px;
+    }
+
+    .no-artists {
+        text-align: center;
+        color: #ecf0f1;
+        font-size: 1.3em;
+        background: rgba(0,0,0,0.3);
+        padding: 40px;
+        border-radius: 15px;
+        backdrop-filter: blur(5px);
+    }
+
+    .page-title {
+        text-align: center;
+        color: #0F4D0F;
+        font-size: 2.5em;
+        margin-top: 0;
+        margin-bottom: 40px;
+        text-shadow: 1px 1px 1px white;
+        position: relative;
+        z-index: 10;
+    }
+
+    .forms-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+
+</style>
+
+<div class="artists-container">
+    <div class="content-wrapper">
+        <h1 class="page-title">Artists Management</h1>
+
+        <div class="forms-container">
+            <div class="form-section">
+                <h3>Add New Artist</h3>
+                <EditForm Model="newArtist" OnSubmit="AddArtist" FormName="AddArtistForm">
+                    <div class="form-group">
+                        <label>Artist Name</label>
+                        <InputText @bind-Value="newArtist.Name" class="form-control"></InputText>
+                    </div>
+                    <div class="form-group">
+                        <label>Artist Genre</label>
+                        <InputText @bind-Value="newArtist.Genre" class="form-control"></InputText>
+                    </div>
+                    <div class="form-group">
+                        <label>Artist Image URL</label>
+                        <InputText @bind-Value="newArtist.Image" class="form-control"></InputText>
+                    </div>
+                    <button type="submit" class="btn-custom">Add Artist</button>
+                </EditForm>
+            </div>
+
+            <div class="form-section">
+                <h3>Update Artist</h3>
+                <p>Select artist to update from the DropDownList</p>
+
+                <select class="form-control" @onchange="OnArtistSelected">
+                    <option value="">-- Select an Artist --</option>
+                    @foreach (var a in artists)
+                    {
+                        <option value="@a.Id">@a.Name</option>
+                    }
+                </select>
+
+                <EditForm Model="updatedArtist" OnSubmit="UpdateArtist" FormName="UpdateArtistForm">
+                    <div class="form-group">
+                        <label>Artist Name</label>
+                        <InputText @bind-Value="updatedArtist.Name" class="form-control"></InputText>
+                    </div>
+                    <div class="form-group">
+                        <label>Artist Genre</label>
+                        <InputText @bind-Value="updatedArtist.Genre" class="form-control"></InputText>
+                    </div>
+                    <div class="form-group">
+                        <label>Artist Image URL</label>
+                        <InputText @bind-Value="updatedArtist.Image" class="form-control"></InputText>
+                    </div>
+                    <button type="submit" class="btn-custom" disabled="@(selectedArtistId == 0)">
+                        Update Artist
+                    </button>
+                </EditForm>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3>Artists Gallery</h3>
+            @if (artists.Count == 0)
+            {
+                <div class="no-artists">
+                    <p>No artists yet.</p>
+                </div>
+            }
+            else
+            {
+                <div class="artists-grid">
+                    @foreach (var artist in artists)
+                    {
+                        <div class="artist-card">
+                            <img src="@artist.Image" alt="@artist.Name" class="artist-image" />
+                            <div class="artist-name">@artist.Name</div>
+                            <div class="artist-genre">@artist.Genre</div>
+                            <button type="button" class="btn-custom btn-delete" @onclick="() => DeleteArtist(artist.Id)">
+                                Delete Artist
+                            </button>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>
 
 @code {
     private IList<ArtistGetDto> artists = new List<ArtistGetDto>();
@@ -40,14 +308,61 @@ else
     [SupplyParameterFromForm]
     private ArtistCreateDto newArtist { get; set; } = new ArtistCreateDto();
 
+    [SupplyParameterFromForm]
+    private ArtistUpdateDto updatedArtist { get; set; } = new ArtistUpdateDto();
+
+    private int selectedArtistId = 0;
+
     protected override async Task OnInitializedAsync()
     {
         artists = await ArtistService.GetAllArtistsAsync();
     }
+
     private async Task AddArtist()
     {
         await ArtistService.AddArtistAsync(newArtist);
         newArtist = new ArtistCreateDto();
         artists = await ArtistService.GetAllArtistsAsync();
+    }
+
+    private async Task DeleteArtist(int id)
+    {
+        await ArtistService.DeleteArtistAsync(id);
+        artists = await ArtistService.GetAllArtistsAsync();
+    }
+
+    private async Task OnArtistSelected(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int artistId) && artistId > 0)
+        {
+            selectedArtistId = artistId;
+            var selectedArtist = artists.FirstOrDefault(a => a.Id == artistId);
+
+            if (selectedArtist != null)
+            {
+                updatedArtist.Name = selectedArtist.Name;
+                updatedArtist.Genre = selectedArtist.Genre;
+                updatedArtist.Image = selectedArtist.Image;
+                StateHasChanged();
+            }
+        }
+        else
+        {
+            selectedArtistId = 0;
+            updatedArtist = new ArtistUpdateDto();
+            StateHasChanged();
+        }
+    }
+
+    private async Task UpdateArtist()
+    {
+        if (selectedArtistId > 0)
+        {
+            await ArtistService.UpdateArtistAsync(updatedArtist, selectedArtistId);
+            updatedArtist = new ArtistUpdateDto();
+            selectedArtistId = 0;
+            artists = await ArtistService.GetAllArtistsAsync();
+            StateHasChanged();
+        }
     }
 }

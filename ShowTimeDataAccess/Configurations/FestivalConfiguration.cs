@@ -29,9 +29,21 @@ public class FestivalConfiguration : IEntityTypeConfiguration<Festival>
             .IsRequired()
             .HasColumnType("datetime");
 
-        builder.Property(a => a.Location)
-            .IsRequired()
-            .HasMaxLength(100);
+        builder.OwnsOne(a => a.Location, location =>
+        {
+            location.Property(l => l.Latitude)
+                .IsRequired()
+                .HasColumnName("Latitude");
+
+            location.Property(l => l.Longitude)
+                .IsRequired()
+                .HasColumnName("Longitude");
+
+            location.Property(l => l.Address)
+                .IsRequired()
+                .HasMaxLength(100)
+                .HasColumnName("Address");
+        });
 
         builder.Property(a => a.SplashArt)  
             .IsRequired()

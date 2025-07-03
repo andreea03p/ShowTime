@@ -62,9 +62,7 @@ public class GenericRepository<T> : IGenericRepository<T> where T : class
     {
         try
         {
-
             return await _context.Set<T>().ToListAsync();
-
         }
         catch (Exception ex)
         {

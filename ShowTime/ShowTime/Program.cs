@@ -19,10 +19,18 @@ var connectionString = builder.Configuration.GetConnectionString("ShowTimeContex
 builder.Services.AddDbContext<ShowTimeDbContext>(options => 
     options.UseSqlServer(connectionString));
 
-// cand in cod aduce o interfata foloseste generic repo de artist
+// cand in cod aduce o interfata foloseste generic repo de artist/..
 builder.Services.AddTransient<IGenericRepository<Artist>, GenericRepository<Artist>>();
+builder.Services.AddTransient<IGenericRepository<Festival>, GenericRepository<Festival>>();
 
 builder.Services.AddTransient<IArtistService, ArtistService>();
+builder.Services.AddTransient<IFestivalService, FestivalService>();
+
+builder.Services.AddServerSideBlazor(options =>
+{
+    options.DetailedErrors = true;
+});
+
 
 var app = builder.Build();
 
@@ -41,7 +49,6 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseAntiforgery();
 
-// Map components with both render modes available
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
     .AddInteractiveWebAssemblyRenderMode();
