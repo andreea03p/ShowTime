@@ -1,7 +1,14 @@
 ﻿@page "/map"
+@using ShowTime.BusinessLogic.Abstraction
+@using ShowTime.BusinessLogic.Dtos
+@using ShowTime.BusinessLogic.Services
+@using ShowTime.DataAccess.Models
 @inject IJSRuntime JSRuntime
+@inject IFestivalService FestivalService
 @implements IAsyncDisposable
 @rendermode InteractiveServer
+
+<PageTitle>Festivals Map</PageTitle>
 
 <style>
     * {
@@ -18,42 +25,108 @@
         background: linear-gradient(135deg, rgba(0,0,0,0.7), rgba(0,0,0,0.4)), url('/images/background.jpg') center/cover;
     }
 
-    .title{
+    .title {
         justify-content: center;
         text-align: center;
         color: #0F4D0F;
-        font-size: 3em;
+        font-size: 3.5em;
         margin-top: 0;
-        margin-bottom: 40px;
+        margin-bottom: 20px;
         text-shadow: 1px 1px 1px white;
         position: relative;
         z-index: 10;
     }
 
+    .loading {
+        text-align: center;
+        color: white;
+        font-size: 1.2em;
+        margin-top: 20px;
+    }
 
+    .error {
+        text-align: center;
+        color: red;
+        font-size: 1.2em;
+        margin-top: 20px;
+        background: rgba(255, 255, 255, 0.9);
+        padding: 20px;
+        border-radius: 8px;
+    }
+
+    #map {
+        height: 500px;
+        width: 100%;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
 </style>
 
-<div class = "title">
+<div class="title">
     <h3>Festivals Map</h3>
 </div>
-    
 
-<div id="map" style="height: 500px; width: 100%;"></div>
+@if (isLoading)
+{
+    <div class="loading">Loading festivals...</div>
+}
+else if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="error">@errorMessage</div>
+}
 
+<div id="map"></div>
 
 @code {
+    private IList<FestivalGetDto> festivals = new List<FestivalGetDto>();
+    private bool isLoading = true;
+    private string? errorMessage;
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
             try
             {
-                await Task.Delay(100);
+                festivals = await FestivalService.GetAllFestivalsAsync();
+
+                var validFestivals = festivals.Where(f =>
+                    f.Latitude != 0 && f.Longitude != 0 &&
+                    !string.IsNullOrEmpty(f.Name)).ToList();
+
+
+                if (validFestivals.Count == 0)
+                {
+                    errorMessage = "No festivals found with valid coordinates";
+                    isLoading = false;
+                    StateHasChanged();
+                    return;
+                }
+
+                await Task.Delay(500);
+
                 await JSRuntime.InvokeVoidAsync("initMap");
+                Console.WriteLine("Map initialized successfully");
+
+                await JSRuntime.InvokeVoidAsync("addFestivalMarkers", validFestivals);
+                Console.WriteLine("Festival markers added successfully");
+
+                isLoading = false;
+                StateHasChanged();
+            }
+            catch (JSException jsEx)
+            {
+                Console.WriteLine($"JavaScript error: {jsEx.Message}");
+                errorMessage = $"Map error: {jsEx.Message}";
+                isLoading = false;
+                StateHasChanged();
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error initializing map: {ex.Message}");
+                Console.WriteLine($"Error: {ex.Message}");
+                errorMessage = $"Error loading festivals: {ex.Message}";
+                isLoading = false;
+                StateHasChanged();
             }
         }
     }

@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 
 namespace ShowTime.BusinessLogic.Dtos;
 
-public class FestivalDeleteDto
+public class LineupGetDto
 {
-    public int Id { get; set; }
-    public string Name { get; set; } = string.Empty;
+    public string Stage { get; set; } = string.Empty;
+    public DateTime StartTime { get; set; }
 }
