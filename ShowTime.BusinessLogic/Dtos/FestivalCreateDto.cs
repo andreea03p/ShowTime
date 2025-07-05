@@ -34,9 +34,8 @@ public class FestivalCreateDto
     [Range(-180, 180, ErrorMessage = "Longitude must be between -180 and 180.")]
     public double Longitude { get; set; }
 
-    [Required(ErrorMessage = "SplashArt is required.")]
     [Url(ErrorMessage = "Provide a valid URL for the splash art.")]
-    public string? SplashArt { get; set; }
+    public string? SplashArt { get; set; } = "https://www.shutterstock.com/image-vector/default-ui-image-placeholder-wireframes-600nw-1037719192.jpg";
 
     [Required(ErrorMessage = "Capacity is required.")]
     [Range(1, 1000000, ErrorMessage = "Capacity must be between 1 and 10000000.")]

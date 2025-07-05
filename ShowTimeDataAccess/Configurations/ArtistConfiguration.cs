@@ -23,8 +23,7 @@ public class ArtistConfiguration : IEntityTypeConfiguration<Artist>
             .HasMaxLength(50);
 
         builder.Property(a => a.Genre)
-            .IsRequired()
-            .HasMaxLength(50);
+            .IsRequired();
 
         builder.Property(a => a.Image)
             .IsRequired();

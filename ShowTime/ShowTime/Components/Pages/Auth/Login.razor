@@ -1,0 +1,88 @@
+﻿@page "/login"
+
+@using Microsoft.AspNetCore.Authentication.Cookies
+@using Microsoft.EntityFrameworkCore
+@using ShowTime.BusinessLogic.Abstraction
+@using ShowTime.BusinessLogic.Dtos
+@using ShowTime.BusinessLogic.Services
+@inject IUserService UserService
+@using ShowTime.DataAccess
+@using ShowTime.DataAccess.Models
+@using System.Security.Claims
+@using ShowTime.DataAccess.Models.Enums
+@inject NavigationManager navigationManager
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Authorization
+@inject ShowTimeDbContext appDbContext
+
+
+
+@* @attribute [Authorize(Roles = "Administrator")] *@
+
+
+<EditForm Model="loginInfo" OnValidSubmit="Authenticate" FormName="LoginForm">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    <div class="form-group">
+        <label for="email">Email:</label>
+        <InputText id="email" class="form-control" @bind-Value="loginInfo.Email" />
+        <ValidationMessage For="@(() => loginInfo.Email)" />
+    </div>
+    <div class="form-group">
+        <label for="password">Password:</label>
+        <InputText id="password" type="password" class="form-control" @bind-Value="loginInfo.Password" />
+        <ValidationMessage For="@(() => loginInfo.Password)" />
+    </div>
+    <button type="submit" class="btn btn-primary">Login</button>
+</EditForm>
+
+
+@code {
+    [SupplyParameterFromForm]
+    private LoginDto loginInfo { get; set; } = new LoginDto();
+
+    [CascadingParameter]
+    private HttpContext httpContext { get; set; } = null!;
+
+    private string? errorMessage;
+
+    private async Task Authenticate()
+    {
+
+        var userAccount = await appDbContext.Users.FirstOrDefaultAsync(u => u.Email == loginInfo.Email);
+        if (userAccount == null)
+        {
+            errorMessage = "Invalid username.";
+            return;
+        }
+        else if(userAccount.Password != loginInfo.Password)
+        {
+            errorMessage = "Invalid password.";
+            return;
+        }
+
+        try
+        {
+            var response = await UserService.LoginAsync(loginInfo);
+
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.Email, loginInfo.Email),
+                new Claim(ClaimTypes.Role, Enum.GetName(typeof(Role), response.Role) ?? nameof(Role.User))
+            };
+
+            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
+
+            await httpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, claimsPrincipal);
+
+            navigationManager.NavigateTo("/");
+
+
+        } catch (Exception ex)
+        {
+            // Handle exceptions, e.g., show an error message
+            Console.WriteLine($"Authentication failed: {ex.Message}");
+        }
+    }
+}

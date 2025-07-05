@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ShowTime.DataAccess.Models.Extras;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -14,8 +15,7 @@ public class ArtistCreateDto
     public string Name { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Genre is required.")]
-    [StringLength(20, ErrorMessage = "Genre cannot have more than 20 characters.")]
-    public string Genre { get; set; } = string.Empty;
+    public Genres Genre { get; set; }
 
     [Required(ErrorMessage = "URL is required.")]
     [Url(ErrorMessage = "Provide a valid URL for the image.")]
