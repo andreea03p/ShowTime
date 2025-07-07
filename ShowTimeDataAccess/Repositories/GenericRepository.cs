@@ -31,7 +31,7 @@ public class GenericRepository<T> : IGenericRepository<T> where T : class
             throw new Exception("An error occurred while adding the entity.", ex);
         }
     }
-   
+
     public async Task DeleteAsync(T entity)
     {
         try

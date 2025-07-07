@@ -20,10 +20,5 @@ public class LineupConfiguration : IEntityTypeConfiguration<Models.Lineup>
         builder.Property(l => l.Stage)
             .IsRequired()
             .HasMaxLength(100);
-
-        builder.Property(l => l.StartDate)  
-            .IsRequired()
-            .HasColumnType("datetime");
-
     }
 }

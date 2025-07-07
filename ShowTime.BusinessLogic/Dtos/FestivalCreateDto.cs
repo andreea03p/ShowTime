@@ -46,7 +46,7 @@ public class FestivalCreateDto
         if (EndDate <= StartDate)
         {
             yield return new ValidationResult(
-                "End date must be after start date!",
+                "End date must be after start date.",
                 new[] { nameof(EndDate) });
         }
     }

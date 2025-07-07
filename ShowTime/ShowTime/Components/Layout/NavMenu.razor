@@ -1,14 +1,31 @@
-﻿
-<div class="navbar-container">
+﻿@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Authentication.Cookies
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
 
+<div class="navbar-container">
     <div class="top-row navbar">
         <div class="navbar-brand">
             <NavLink href="/">
                 <img src="/images/logo.png" alt="Logo" class="logo-circle" />
             </NavLink>
         </div>
+        <AuthorizeView Roles="Admin, User">
+            <Authorized>
+                <div class="navbar-logout">
+                    <div class="nav-item logout-item">
+                        <NavLink class="nav-link logout-link" href="logout"
+                                 style="background: #2AAA8A !important; color: black !important; border-radius: 40px !important;">
+                            <span class="bi bi-box-arrow-right" aria-hidden="true"></span> Logout
+                        </NavLink>
+                    </div>
+                </div>
+            </Authorized>
+        </AuthorizeView>
     </div>
-    
+
     <div class="nav-bar">
         <nav class="nav-menu">
             <div class="nav-item">
@@ -16,37 +33,21 @@
                     <span class="bi bi-map" aria-hidden="true"></span> Map
                 </NavLink>
             </div>
-
             <div class="nav-item">
                 <NavLink class="nav-link" href="festivals">
                     <span class="bi bi-music-note-beamed" aria-hidden="true"></span> Festivals
                 </NavLink>
             </div>
-
             <div class="nav-item">
                 <NavLink class="nav-link" href="tickets">
                     <span class="bi bi-ticket-perforated" aria-hidden="true"></span> Tickets
                 </NavLink>
             </div>
-
             <div class="nav-item">
                 <NavLink class="nav-link" href="artists">
-                     <span class="bi bi-lightning" aria-hidden="true"></span> Artists
+                    <span class="bi bi-lightning" aria-hidden="true"></span> Artists
                 </NavLink>
             </div>
         </nav>
-
-        <AuthorizeView Roles = "Admin, User">
-            <Authorized>
-                <div class="top-row navbar">
-                    <div class="navbar-logout">
-                        <NavLink href="/">
-                            <i class="bi bi-box-arrow-right"></i>
-                        </NavLink>
-                    </div>
-                </div>
-            </Authorized>
-        </AuthorizeView>
-
     </div>
 </div>

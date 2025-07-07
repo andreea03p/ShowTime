@@ -9,6 +9,6 @@ namespace ShowTime.BusinessLogic.Abstraction;
 
 public interface IUserService
 {
-    Task<LoginResponseDto> LoginAsync(LoginDto loginDto);
-    //Task<LoginResponseDto> RegisterAsync(LoginDto loginDto);
+    Task<LoginResponseDto?> LoginAsync(LoginDto loginDto);
+    Task<string> RegisterAsync(RegisterDto registerDto);
 }

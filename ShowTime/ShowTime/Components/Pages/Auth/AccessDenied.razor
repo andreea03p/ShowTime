@@ -1,9 +1,174 @@
-﻿
-@page "/access-denied"
+﻿@page "/access-denied"
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Web
 
 
-<h3>AccessDenied</h3>
+<style>
+    .access-denied-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 70vh;
+        padding: 2rem;
+        background-color: #f8f9fa;
+    }
+
+    .access-denied-content {
+        text-align: center;
+        background: white;
+        padding: 3rem 2rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        max-width: 500px;
+        width: 100%;
+    }
+
+    .icon-container {
+        margin-bottom: 1.5rem;
+    }
+
+    .access-denied-icon {
+        width: 80px;
+        height: 80px;
+        color: #dc3545;
+        margin: 0 auto;
+    }
+
+    .access-denied-title {
+        font-size: 2.5rem;
+        font-weight: 600;
+        color: #dc3545;
+        margin-bottom: 1rem;
+    }
+
+    .access-denied-message {
+        font-size: 1.1rem;
+        color: #6c757d;
+        margin-bottom: 2rem;
+        line-height: 1.6;
+    }
+
+    .access-denied-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+    }
+
+    .btn {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 6px;
+        font-size: 1rem;
+        font-weight: 500;
+        text-decoration: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 120px;
+    }
+
+    .btn-primary {
+        background-color: #0d6efd;
+        color: white;
+    }
+
+        .btn-primary:hover {
+            background-color: #0b5ed7;
+        }
+
+    .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+    }
+
+        .btn-secondary:hover {
+            background-color: #5c636a;
+        }
+
+    .access-denied-details {
+        border-top: 1px solid #e9ecef;
+        padding-top: 1.5rem;
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+
+        .access-denied-details p {
+            margin: 0.25rem 0;
+        }
+
+    @@media (max-width: 768px) {
+        .access-denied-content
+
+    {
+        padding: 2rem 1rem;
+    }
+
+    .access-denied-title {
+        font-size: 2rem;
+    }
+
+    .access-denied-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .btn {
+        width: 100%;
+        max-width: 200px;
+    }
+
+    }
+</style>
+
+
+
+<PageTitle>Access Denied</PageTitle>
+
+<div class="access-denied-container">
+    <div class="access-denied-content">
+        <div class="icon-container">
+            <svg class="access-denied-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="m4.9 4.9 14.2 14.2"></path>
+            </svg>
+        </div>
+
+        <h1 class="access-denied-title">Access Denied</h1>
+
+        <p class="access-denied-message">
+            You don't have permission to access this page.
+        </p>
+
+        <div class="access-denied-actions">
+            <button class="btn btn-primary" @onclick="GoBack">
+                Go Back
+            </button>
+            <a href="/" class="btn btn-secondary">
+                Return to Home
+            </a>
+        </div>
+
+        <div class="access-denied-details">
+            <p><strong>Error Code:</strong> 403</p>
+            <p><strong>Time:</strong> @DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")</p>
+        </div>
+    </div>
+</div>
+
 
 @code {
+    [Inject]
+    private NavigationManager Navigation { get; set; } = default!;
 
+    [Inject]
+    private IJSRuntime JSRuntime { get; set; } = default!;
+
+    private async Task GoBack()
+    {
+        await JSRuntime.InvokeVoidAsync("history.back");
+    }
 }

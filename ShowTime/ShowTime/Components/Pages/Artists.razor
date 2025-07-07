@@ -3,6 +3,7 @@
 @using ShowTime.BusinessLogic.Dtos
 @using ShowTime.DataAccess.Models.Extras
 @inject IArtistService ArtistService
+@inject IFestivalService FestivalService
 @rendermode InteractiveServer
 
 <style>
@@ -32,14 +33,14 @@
         background: linear-gradient(135deg, rgba(0,0,0,0.7), rgba(0,0,0,0.4)), url('/images/background.jpg') center/cover;
     }
 
-    content-wrapper {
+    .content-wrapper {
         padding: 80px 20px 20px 20px;
         width: 100%;
         height: 100%;
     }
 
     .form-section {
-        color:antiquewhite;
+        color: antiquewhite;
         background: linear-gradient(135deg, black, white);
         backdrop-filter: blur(10px);
         border-radius: 15px;
@@ -83,7 +84,6 @@
             box-shadow: 0 0 0 3px rgba(52,152,219,0.1);
         }
 
-
     .btn-custom {
         background: linear-gradient(135deg, #3498db, #2980b9);
         color: white;
@@ -119,13 +119,13 @@
             background: linear-gradient(135deg, #708A58, #FFB823);
         }
 
-
     .artists-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
         gap: 25px;
         margin-top: 20px;
     }
+
     .artist-card {
         background: linear-gradient(50deg, black, #06402B);
         backdrop-filter: blur(10px);
@@ -137,6 +137,9 @@
         transition: all 0.3s ease;
         overflow: hidden;
         position: relative;
+        min-height: 400px;
+        display: flex;
+        flex-direction: column;
     }
 
         .artist-card::before {
@@ -157,7 +160,7 @@
         }
 
     .artist-image {
-        width: 100%;
+        width: 90%;
         height: 250px;
         object-fit: cover;
         border-radius: 15px;
@@ -190,6 +193,93 @@
         justify-content: center;
     }
 
+    /* New styles for festival information */
+    .artist-festivals {
+        flex: 1;
+        margin-top: 15px;
+        text-align: left;
+    }
+
+    .festivals-header {
+        color: #91C8E4;
+        font-size: 1.1em;
+        font-weight: 600;
+        margin-bottom: 10px;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .festival-item {
+        background: rgba(255,255,255,0.1);
+        border-radius: 8px;
+        padding: 10px;
+        margin-bottom: 8px;
+        border-left: 3px solid #3498db;
+        transition: all 0.3s ease;
+    }
+
+        .festival-item:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateX(5px);
+        }
+
+    .festival-name {
+        color: white;
+        font-weight: 600;
+        font-size: 0.95em;
+        margin-bottom: 4px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .festival-details {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .festival-stage, .festival-time {
+        color: #bdc3c7;
+        font-size: 0.8em;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .festival-stage i, .festival-time i {
+        color: #3498db;
+        width: 12px;
+    }
+
+    .no-festivals {
+        color: #7f8c8d;
+        font-style: italic;
+        text-align: center;
+        padding: 10px;
+        font-size: 0.9em;
+    }
+
+    .festival-count {
+        background: #3498db;
+        color: white;
+        font-size: 0.7em;
+        padding: 2px 6px;
+        border-radius: 10px;
+        font-weight: bold;
+    }
+
+    .loading-festivals {
+        color: #7f8c8d;
+        font-style: italic;
+        text-align: center;
+        padding: 10px;
+        font-size: 0.9em;
+    }
+
     .no-artists {
         text-align: center;
         color: #ecf0f1;
@@ -218,7 +308,7 @@
         margin-bottom: 30px;
     }
 
-        .validation-message {
+    .validation-message {
         color: red;
         font-size: 0.875em;
         margin-top: 5px;
@@ -242,100 +332,116 @@
         font-weight: bold;
     }
 
+    @@keyframes shimmer {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
 
+    @@media (max-width: 768px) {
+        .artists-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .artist-card {
+            min-height: auto;
+        }
+        
+        .festival-details {
+            flex-direction: column;
+        }
+    }
 </style>
 
 <div class="artists-container">
     <div class="content-wrapper">
-        <h1 class="page-title">Artists Management</h1>
 
-        <div class="forms-container">
-            <div class="form-section">
-                <h3>Add New Artist</h3>
-                <EditForm Model="newArtist" OnValidSubmit="AddArtist" FormName="AddArtistForm" @ref="addArtistFormRef">
-                    <DataAnnotationsValidator />
-            
-                    <div class="form-group">
-                        <label class="required">Artist Name</label>
-                        <InputText @bind-Value="newArtist.Name" 
-                                  class="form-control" 
-                                  placeholder="Enter artist name"
-                                  @oninput="OnArtistFieldChanged" />
-                        <ValidationMessage For="@(() => newArtist.Name)" class="validation-message" />
+        <AuthorizeView Roles="Admin">
+            <Authorized Context="authContext">
+                <h1 class="page-title">Artists Management</h1>
+                <div class="forms-container">
+                    <div class="form-section">
+                        <h3>Add New Artist</h3>
+                        <EditForm Model="newArtist" OnValidSubmit="AddArtist" FormName="AddArtistForm" @ref="addArtistFormRef">
+                            <DataAnnotationsValidator />
+
+                            <div class="form-group">
+                                <label class="required">Artist Name</label>
+                                <InputText @bind-Value="newArtist.Name" class="form-control" placeholder="Enter artist name" @oninput="OnArtistFieldChanged" />
+                                <ValidationMessage For="@(() => newArtist.Name)" class="validation-message" />
+                            </div>
+
+                            <div class="form-group">
+                                <label class="required">Artist Genre</label>
+                                <InputSelect @bind-Value="newArtist.Genre" class="form-control" @oninput="OnArtistFieldChanged">
+                                    <option value="">--Select Genre--</option>
+                                    @foreach (Genres genre in Enum.GetValues(typeof(Genres)))
+                                    {
+                                        <option value="@genre">@genre</option>
+                                    }
+                                </InputSelect>
+                                <ValidationMessage For="@(() => newArtist.Genre)" class="validation-message" />
+                            </div>
+
+                            <div class="form-group">
+                                <label class="required">Artist Image URL</label>
+                                <InputText @bind-Value="newArtist.Image" class="form-control" placeholder="https://example.com/image.jpg" @oninput="OnArtistFieldChanged" />
+                                <ValidationMessage For="@(() => newArtist.Image)" class="validation-message" />
+                            </div>
+
+                            <button type="submit" class="btn-custom" disabled="@(!IsAddArtistFormValid)">
+                                Add Artist
+                            </button>
+                        </EditForm>
                     </div>
-            
-                    <div class="form-group">
-                        <label class="required">Artist Genre</label>
-                        <InputSelect @bind-Value="newArtist.Genre" class="form-control" @oninput="OnArtistFieldChanged">
-                            <option value="">--Select Genre--</option>
-                            @foreach (Genres genre in Enum.GetValues(typeof(Genres)))
+
+                    <div class="form-section">
+                        <h3>Update Artist</h3>
+                        <p>Select artist to update from the DropDownList</p>
+
+                        <select class="form-control" @onchange="OnArtistSelected">
+                            <option value="">-- Select an Artist --</option>
+                            @foreach (var a in artists)
                             {
-                                <option value="@genre">@genre</option>
+                                <option value="@a.Id">@a.Name</option>
                             }
-                        </InputSelect>
-                        <ValidationMessage For="@(() => newArtist.Genre)" class="validation-message" />
-                    </div>
-            
-                    <div class="form-group">
-                        <label class="required">Artist Image URL</label>
-                        <InputText @bind-Value="newArtist.Image" 
-                                  class="form-control" 
-                                  placeholder="https://example.com/image.jpg"
-                                  @oninput="OnArtistFieldChanged" />
-                        <ValidationMessage For="@(() => newArtist.Image)" class="validation-message" />
-                    </div>
-            
-                    <button type="submit" class="btn-custom" disabled="@(!IsAddArtistFormValid)">
-                        Add Artist
-                    </button>
-                </EditForm>
-            </div>
+                        </select>
 
-            <div class="form-section">
-                <h3>Update Artist</h3>
-                <p>Select artist to update from the DropDownList</p>
+                        <EditForm Model="updatedArtist" OnValidSubmit="UpdateArtist" FormName="UpdateArtistForm" @ref="updateArtistFormRef">
+                            <DataAnnotationsValidator />
 
-                <select class="form-control" @onchange="OnArtistSelected">
-                    <option value="">-- Select an Artist --</option>
-                    @foreach (var a in artists)
-                    {
-                        <option value="@a.Id">@a.Name</option>
-                    }
-                </select>
+                            <div class="form-group">
+                                <label class="required">Artist Name</label>
+                                <InputText @bind-Value="updatedArtist.Name" class="form-control" @oninput="OnUpdateArtistFieldChanged" />
+                                <ValidationMessage For="@(() => updatedArtist.Name)" class="validation-message" />
+                            </div>
 
-                <EditForm Model="updatedArtist" OnValidSubmit="UpdateArtist" FormName="UpdateArtistForm" @ref="updateArtistFormRef">
-                    <DataAnnotationsValidator />
-            
-                    <div class="form-group">
-                        <label class="required">Artist Name</label>
-                        <InputText @bind-Value="updatedArtist.Name" class="form-control" @oninput="OnUpdateArtistFieldChanged" />
-                        <ValidationMessage For="@(() => updatedArtist.Name)" class="validation-message" />
+                            <div class="form-group">
+                                <label class="required">Artist Genre</label>
+                                <InputSelect @bind-Value="updatedArtist.Genre" class="form-control" @oninput="OnUpdateArtistFieldChanged">
+                                    <option value="">--Select Genre--</option>
+                                    @foreach (Genres genre in Enum.GetValues(typeof(Genres)))
+                                    {
+                                        <option value="@genre">@genre</option>
+                                    }
+                                </InputSelect>
+                                <ValidationMessage For="@(() => updatedArtist.Genre)" class="validation-message" />
+                            </div>
+
+                            <div class="form-group">
+                                <label class="required">Artist Image URL</label>
+                                <InputText @bind-Value="updatedArtist.Image" class="form-control" @oninput="OnUpdateArtistFieldChanged" />
+                                <ValidationMessage For="@(() => updatedArtist.Image)" class="validation-message" />
+                            </div>
+
+                            <button type="submit" class="btn-custom" disabled="@(selectedArtistId == 0 || !IsUpdateArtistFormValid)">
+                                Update Artist
+                            </button>
+                        </EditForm>
                     </div>
-            
-                    <div class="form-group">
-                        <label class="required">Artist Genre</label>
-                        <InputSelect @bind-Value="updatedArtist.Genre" class="form-control" @oninput="OnUpdateArtistFieldChanged">
-                            <option value="">--Select Genre--</option>
-                            @foreach (Genres genre in Enum.GetValues(typeof(Genres)))
-                            {
-                                <option value="@genre">@genre</option>
-                            }
-                        </InputSelect>
-                        <ValidationMessage For="@(() => updatedArtist.Genre)" class="validation-message" />
-                    </div>
-            
-                    <div class="form-group">
-                        <label class="required">Artist Image URL</label>
-                        <InputText @bind-Value="updatedArtist.Image" class="form-control" @oninput="OnUpdateArtistFieldChanged" />
-                        <ValidationMessage For="@(() => updatedArtist.Image)" class="validation-message" />
-                    </div>
-            
-                    <button type="submit" class="btn-custom" disabled="@(selectedArtistId == 0 || !IsUpdateArtistFormValid)">
-                        Update Artist
-                    </button>
-                </EditForm>
-            </div>
-        </div>
+                </div>
+            </Authorized>
+        </AuthorizeView>
 
         <div class="form-section">
             <h3>Artists Gallery</h3>
@@ -353,21 +459,78 @@
                         <div class="artist-card">
                             <img src="@artist.Image" alt="@artist.Name" class="artist-image" />
                             <div class="artist-name">@artist.Name</div>
-                            <div class="artist-genre">@artist.Genre</div> 
-                            <br />
-                            <button type="button" class="btn-custom btn-delete" @onclick="() => PopupDeleteArtist(artist.Id)">
-                                Delete Artist
-                            </button>
+                            <div class="artist-genre">@artist.Genre</div>
+
+                            <div class="artist-festivals">
+                                <div class="festivals-header">
+                                    <i class="bi bi-calendar-event"></i>
+                                    Festival Performances
+                                    @if (artistFestivals.ContainsKey(artist.Id) && artistFestivals[artist.Id].Any())
+                                    {
+                                        <span class="festival-count">@artistFestivals[artist.Id].Count</span>
+                                    }
+                                </div>
+
+                                @if (loadingFestivals.Contains(artist.Id))
+                                {
+                                    <div class="loading-festivals">
+                                        <i class="bi bi-clock"></i> Loading performances...
+                                    </div>
+                                }
+                                else if (artistFestivals.ContainsKey(artist.Id) && artistFestivals[artist.Id].Any())
+                                {
+                                    @foreach (var performance in artistFestivals[artist.Id].OrderBy(p => p.StartTime))
+                                    {
+                                        <div class="festival-item">
+                                            <div class="festival-name">
+                                                <i class="bi bi-music-note-beamed"></i>
+                                                @performance.Festival.Name
+                                            </div>
+                                            <div class="festival-details">
+                                                <div class="festival-stage">
+                                                    <i class="bi bi-geo-alt"></i>
+                                                    <span>@performance.Stage</span>
+                                                </div>
+                                                <div class="festival-time">
+                                                    <i class="bi bi-clock"></i>
+                                                    <span>@performance.StartTime.ToString("MMM dd, yyyy - HH:mm")</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                }
+                                else
+                                {
+                                    <div class="no-festivals">
+                                        <i class="bi bi-music-note"></i>
+                                        <br />
+                                        No scheduled performances so far.
+                                    </div>
+                                }
+                            </div>
+
+                            <AuthorizeView Roles="Admin">
+                                <Authorized>
+                                    <div style="margin-top: auto; padding-top: 15px;">
+                                        <button type="button" class="btn-custom btn-delete" @onclick="() => PopupDeleteArtist(artist.Id)">
+                                            Delete Artist
+                                        </button>
+                                    </div>
+                                </Authorized>
+                            </AuthorizeView>
                         </div>
                     }
                 </div>
             }
         </div>
+
     </div>
 </div>
 
 @code {
     private IList<ArtistGetDto> artists = new List<ArtistGetDto>();
+    private Dictionary<int, List<LineupGetDto>> artistFestivals = new();
+    private HashSet<int> loadingFestivals = new();
 
     [SupplyParameterFromForm]
     private ArtistCreateDto newArtist { get; set; } = new ArtistCreateDto();
@@ -385,6 +548,33 @@
     protected override async Task OnInitializedAsync()
     {
         artists = await ArtistService.GetAllArtistsAsync();
+        await LoadAllArtistFestivals();
+    }
+
+    private async Task LoadAllArtistFestivals()
+    {
+        var tasks = artists.Select(async artist =>
+        {
+            loadingFestivals.Add(artist.Id);
+            StateHasChanged();
+            
+            try
+            {
+                var festivals = await ArtistService.GetAllFestivalsForArtistAsync(artist.Id);
+                artistFestivals[artist.Id] = festivals.Cast<LineupGetDto>().ToList();
+            }
+            catch (Exception)
+            {
+                artistFestivals[artist.Id] = new List<LineupGetDto>();
+            }
+            finally
+            {
+                loadingFestivals.Remove(artist.Id);
+                StateHasChanged();
+            }
+        });
+
+        await Task.WhenAll(tasks);
     }
 
     private async Task AddArtist()
@@ -392,6 +582,7 @@
         await ArtistService.AddArtistAsync(newArtist);
         newArtist = new ArtistCreateDto();
         artists = await ArtistService.GetAllArtistsAsync();
+        await LoadAllArtistFestivals();
         StateHasChanged();
     }
 
@@ -399,6 +590,8 @@
     {
         await ArtistService.DeleteArtistAsync(id);
         artists = await ArtistService.GetAllArtistsAsync();
+        artistFestivals.Remove(id);
+        StateHasChanged();
     }
 
     @inject IJSRuntime JSRuntime  
@@ -444,6 +637,7 @@
             updatedArtist = new ArtistUpdateDto();
             selectedArtistId = 0;
             artists = await ArtistService.GetAllArtistsAsync();
+            await LoadAllArtistFestivals();
             StateHasChanged();
         }
     }

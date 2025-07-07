@@ -14,4 +14,7 @@ public interface IArtistService
     Task AddArtistAsync(ArtistCreateDto artist);   
     Task UpdateArtistAsync(ArtistUpdateDto artist, int id);
     Task DeleteArtistAsync(int id);
+
+    Task<List<LineupGetDto>> GetAllFestivalsForArtistAsync(int artistId);
+
 }

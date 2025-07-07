@@ -1,23 +1,28 @@
 ﻿@page "/logout"
-
 @using Microsoft.AspNetCore.Authentication
-@inject NavigationManager navigationManager
+@using Microsoft.AspNetCore.Authentication.Cookies
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
 
-
-<h3>Logout</h3>
 
 @code {
-
     [CascadingParameter]
-    private HttpContext HttpContext { get; set; } = null!;
+    private HttpContext? HttpContext { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
-        await base.OnInitializedAsync();
-        if(HttpContext.User.Identity.IsAuthenticated)
+        await LogoutAsync();
+    }
+
+    private async Task LogoutAsync()
+    {
+        if (HttpContext != null)
         {
-            await HttpContext.SignOutAsync();
-            navigationManager.NavigateTo("/");
-        }   
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        }
+
+        NavigationManager.NavigateTo("/login", true);
     }
 }

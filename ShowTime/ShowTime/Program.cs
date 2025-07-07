@@ -19,6 +19,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     {
         options.Cookie.Name = "auth-token";
         options.LoginPath = "/login";
+        options.LogoutPath = "/logout";
         options.AccessDeniedPath = "/access-denied";
         options.ExpireTimeSpan = TimeSpan.FromHours(3);
     });
@@ -37,6 +38,7 @@ builder.Services.AddDbContext<ShowTimeDbContext>(options =>
 builder.Services.AddTransient<IGenericRepository<Artist>, GenericRepository<Artist>>();
 builder.Services.AddTransient<IGenericRepository<Festival>, GenericRepository<Festival>>();
 builder.Services.AddTransient<IGenericRepository<User>, GenericRepository<User>>();
+builder.Services.AddTransient<IGenericRepository<Lineup>, GenericRepository<Lineup>>();
 
 builder.Services.AddTransient<IArtistService, ArtistService>();
 builder.Services.AddTransient<IFestivalService, FestivalService>();

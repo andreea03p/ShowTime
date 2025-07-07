@@ -10,10 +10,17 @@ namespace ShowTime.BusinessLogic.Services;
 public class FestivalService : IFestivalService
 {
     private readonly IGenericRepository<Festival> _festivalRepository;
+    private readonly IGenericRepository<Artist> _artistRepository;
+    private readonly IGenericRepository<Lineup> _lineupRepository;
 
-    public FestivalService(IGenericRepository<Festival> festivalRepository)
+    public FestivalService(
+        IGenericRepository<Festival> festivalRepository,
+        IGenericRepository<Artist> artistRepository,
+        IGenericRepository<Lineup> lineupRepository)
     {
         _festivalRepository = festivalRepository;
+        _artistRepository = artistRepository;
+        _lineupRepository = lineupRepository;
     }
 
     public async Task AddFestivalAsync(FestivalCreateDto festivalCreateDto)
@@ -140,6 +147,216 @@ public class FestivalService : IFestivalService
         catch (Exception ex)
         {
             throw new Exception($"An error occurred while deleting the festival with ID {id}.", ex);
+        }
+    }
+
+
+
+    public async Task<List<LineupGetDto>> GetCompleteLineupForFestivalAsync(int festivalId)
+    {
+        try
+        {
+            var lineups = await _lineupRepository.GetAllAsync();
+            var festivalLineups = lineups.Where(l => l.FestivalId == festivalId).ToList();
+
+            var result = new List<LineupGetDto>();
+            foreach (var lineup in festivalLineups)
+            {
+                var festival = await _festivalRepository.GetByIdAsync(lineup.FestivalId);
+                var artist = await _artistRepository.GetByIdAsync(lineup.ArtistId);
+
+                if (festival != null && artist != null)
+                {
+                    result.Add(new LineupGetDto
+                    {
+                        FestivalId = lineup.FestivalId,
+                        ArtistId = lineup.ArtistId,
+                        Stage = lineup.Stage,
+                        StartTime = DateTimeOffset.Now,
+                        Festival = new FestivalGetDto
+                        {
+                            Id = festival.Id,
+                            Name = festival.Name,
+                            Address = festival.Location.Address,
+                            Latitude = festival.Location.Latitude,
+                            Longitude = festival.Location.Longitude,
+                            StartDate = festival.StartDate,
+                            EndDate = festival.EndDate,
+                            SplashArt = festival.SplashArt,
+                            Capacity = festival.Capacity
+                        },
+                        Artist = new ArtistGetDto
+                        {
+                            Id = artist.Id,
+                            Name = artist.Name,
+                            Image = artist.Image,
+                            Genre = artist.Genre
+                        }
+                    });
+                }
+            }
+
+            return result.OrderBy(l => l.StartTime).ToList();
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"An error occurred while retrieving lineup for festival {festivalId}.", ex);
+        }
+    }
+
+    public async Task AddArtistToFestivalLineupAsync(int festivalId, int artistId, string stage, DateTimeOffset startTime)
+    {
+        try
+        {
+            Console.WriteLine($"FestivalId={festivalId}, ArtistId={artistId}, Stage='{stage}', StartTime={startTime}");
+
+            if (festivalId <= 0)
+                throw new ArgumentException("Invalid festival ID", nameof(festivalId));
+
+            if (artistId <= 0)
+                throw new ArgumentException("Invalid artist ID", nameof(artistId));
+
+            if (string.IsNullOrWhiteSpace(stage))
+                throw new ArgumentException("Stage cannot be empty", nameof(stage));
+
+
+            var existingLineups = await _lineupRepository.GetAllAsync();
+            var existingEntry = existingLineups.FirstOrDefault(l =>
+                l.FestivalId == festivalId && l.ArtistId == artistId);
+
+            if (existingEntry != null)
+            {
+                var festival = await _festivalRepository.GetByIdAsync(festivalId);
+                var artist = await _artistRepository.GetByIdAsync(artistId);
+
+                throw new InvalidOperationException(
+                    $"Artist '{artist?.Name ?? "Unknown"}' is already performing at festival '{festival?.Name ?? "Unknown"}' " +
+                    $"on stage '{existingEntry.Stage}' at {existingEntry.StartTime:yyyy-MM-dd HH:mm}. " +
+                    $"Each artist can only perform once per festival.");
+            }
+
+            var targetFestival = await _festivalRepository.GetByIdAsync(festivalId);
+            if (targetFestival == null)
+            {
+                throw new ArgumentException($"Festival with ID {festivalId} not found");
+            }
+
+            var targetArtist = await _artistRepository.GetByIdAsync(artistId);
+            if (targetArtist == null)
+            {
+                throw new ArgumentException($"Artist with ID {artistId} not found");
+            }
+
+            Console.WriteLine($"Adding {targetArtist.Name} to {targetFestival.Name}");
+
+            var lineup = new Lineup
+            {
+                FestivalId = festivalId,
+                Festival = targetFestival,
+                ArtistId = artistId,
+                Artist = targetArtist,
+                Stage = stage.Trim(),
+                StartTime = DateTime.Today
+            };
+
+            await _lineupRepository.AddAsync(lineup);
+
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Exception: {ex.Message}");
+            if (ex.InnerException != null)
+            {
+                Console.WriteLine($"Inner Exception: {ex.InnerException.Message}");
+            }
+
+            throw new Exception($"Failed to add artist to festival lineup: {ex.Message}", ex);
+        }
+    }
+
+    public async Task RemoveArtistFromLineupAsync(int festivalId, int artistId)
+    {
+        try
+        {
+            var lineups = await _lineupRepository.GetAllAsync();
+            var lineup = lineups.FirstOrDefault(l => l.FestivalId == festivalId && l.ArtistId == artistId);
+
+            if (lineup == null)
+                throw new KeyNotFoundException($"Lineup not found for festival {festivalId} and artist {artistId}.");
+
+            await _lineupRepository.DeleteAsync(lineup);
+        }
+        catch (Exception ex)
+        {
+            throw new Exception("An error occurred while removing artist from lineup.", ex);
+        }
+    }
+
+    public async Task UpdateLineupEntryAsync(int festivalId, int artistId, string stage, DateTimeOffset startTime)
+    {
+        try
+        {
+            var lineups = await _lineupRepository.GetAllAsync();
+            var lineup = lineups.FirstOrDefault(l => l.FestivalId == festivalId && l.ArtistId == artistId);
+
+            if (lineup == null)
+                throw new KeyNotFoundException($"Lineup not found for festival {festivalId} and artist {artistId}.");
+
+            lineup.Stage = stage;
+            lineup.StartTime = startTime;
+
+            await _lineupRepository.UpdateAsync(lineup);
+        }
+        catch (Exception ex)
+        {
+            throw new Exception("An error occurred while updating lineup entry.", ex);
+        }
+    }
+
+    public async Task<List<LineupGetDto>> GetLineupByStageAsync(int festivalId, string stage)
+    {
+        try
+        {
+            var completeLineup = await GetCompleteLineupForFestivalAsync(festivalId);
+            return completeLineup.Where(l => l.Stage.Equals(stage, StringComparison.OrdinalIgnoreCase))
+                                .OrderBy(l => l.StartTime)
+                                .ToList();
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"An error occurred while retrieving lineup for stage {stage}.", ex);
+        }
+    }
+
+    public async Task<List<LineupGetDto>> GetLineupByDayAsync(int festivalId, DateTime day)
+    {
+        try
+        {
+            var completeLineup = await GetCompleteLineupForFestivalAsync(festivalId);
+            return completeLineup.Where(l => l.StartTime.Date == day.Date)
+                                .OrderBy(l => l.StartTime)
+                                .ToList();
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"An error occurred while retrieving lineup for day {day:yyyy-MM-dd}.", ex);
+        }
+    }
+
+    public async Task<List<string>> GetStagesForFestivalAsync(int festivalId)
+    {
+        try
+        {
+            var lineups = await _lineupRepository.GetAllAsync();
+            return lineups.Where(l => l.FestivalId == festivalId)
+                         .Select(l => l.Stage)
+                         .Distinct()
+                         .OrderBy(s => s)
+                         .ToList();
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"An error occurred while retrieving stages for festival {festivalId}.", ex);
         }
     }
 }

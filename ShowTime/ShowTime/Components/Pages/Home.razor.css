@@ -1,14 +1,14 @@
 ﻿body {
     margin: 0;
     padding: 0;
-    overflow: hidden; /* Prevent scrollbars */
+    overflow: hidden;
     padding-top: 60px;
 }
 
 .home-container {
     width: 100vw;
     height: 100vh;
-    position: fixed; /* Ensures full screen coverage */
+    position: fixed; 
     top: 0;
     left: 0;
     display: flex;
@@ -26,7 +26,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.3); /* Dark overlay to improve text readability */
+    background: rgba(0, 0, 0, 0.3);
     z-index: 1;
 }
 

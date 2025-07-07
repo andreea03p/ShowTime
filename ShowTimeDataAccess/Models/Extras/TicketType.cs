@@ -11,3 +11,4 @@ public enum TicketType
     Standard = 0,
     VIP = 1
 }
+

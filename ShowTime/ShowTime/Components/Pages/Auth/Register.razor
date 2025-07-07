@@ -1,5 +1,331 @@
-﻿<h3>Register</h3>
+﻿@page "/register"
+@using Microsoft.AspNetCore.Authentication.Cookies
+@using Microsoft.EntityFrameworkCore
+@using ShowTime.BusinessLogic.Abstraction
+@using ShowTime.BusinessLogic.Dtos
+@using ShowTime.DataAccess
+@using ShowTime.DataAccess.Models
+@using System.Security.Claims
+@using ShowTime.DataAccess.Models.Enums
+@using Microsoft.AspNetCore.Authentication
+@using BCrypt.Net
+@inject IUserService UserService
+@inject NavigationManager navigationManager
+@inject ShowTimeDbContext appDbContext
+
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body, html {
+        height: 100%;
+        background: linear-gradient(135deg, rgba(0,0,0,0.7), rgba(0,0,0,0.4)), url('/images/bckg1.jpg') center/cover;
+        background-attachment: fixed;
+    }
+
+    .wrapper {
+        height: 100vh;
+        width: 100vw;
+        overflow: auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .register-container {
+        max-height: 100%;
+        max-width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .register-card {
+        background: linear-gradient(135deg, rgb(53, 94, 59), rgb(2, 48, 32), rgb(9, 121, 105));
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        border: 1px solid rgba(255,255,255,0.2);
+        width: 100%;
+        max-width: 500px;
+        overflow: hidden;
+        animation: fadeInUp 0.6s ease-out;
+    }
+
+    .card-body {
+        padding: 30px;
+    }
+
+    .card-footer {
+        background: silver;
+        padding: 20px;
+        text-align: center;
+        border-radius: 0 0 25px 25px;
+    }
+
+    .error-message {
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
+        color: #721c24;
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+
+    .success-message {
+        background-color: #d4edda;
+        border-color: #c3e6cb;
+        color: #155724;
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 8px;
+        color: white;
+        font-weight: 500;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 12px 15px;
+        border: 2px solid rgba(0,0,0,0.1);
+        border-radius: 8px;
+        background: rgba(255,255,255,0.9);
+        transition: all 0.3s ease;
+        font-size: 1rem;
+    }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #3498db;
+            background: rgba(255,255,255,1);
+            box-shadow: 0 0 0 3px rgba(52,152,219,0.1);
+        }
+
+        .form-input::placeholder {
+            color: #6c757d;
+            opacity: 0.7;
+        }
+
+    .validation-error {
+        color: #dc3545;
+        font-size: 0.875rem;
+        margin-top: 5px;
+        display: block;
+        font-weight: 500;
+    }
+
+    .register-btn {
+        width: 100%;
+        padding: 12px 24px;
+        font-size: 1rem;
+        font-weight: 500;
+        text-align: center;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: linear-gradient(135deg, #27ae60, #2ecc71);
+        color: black;
+        box-shadow: 0 4px 15px rgba(39,174,96,0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 48px;
+    }
+
+        .register-btn:hover:not(:disabled) {
+            background: linear-gradient(135deg, #2ecc71, #1abc9c);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(39,174,96,0.4);
+        }
+
+        .register-btn:disabled {
+            background: linear-gradient(135deg, #bdc3c7, #95a5a6);
+            cursor: not-allowed;
+            transform: none;
+            opacity: 0.7;
+        }
+
+    .login-link {
+        margin: 0;
+        color: #666;
+        font-size: 0.95rem;
+    }
+
+        .login-link a {
+            color: #0F4D0F;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+            .login-link a:hover {
+                color: #2980b9;
+                text-decoration: underline;
+            }
+
+    @@keyframes spin {
+        to
+
+    {
+        transform: rotate(360deg);
+    }
+
+    }
+
+    @@keyframes fadeInUp {
+        from
+
+    {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    }
+</style>
+
+<div class="register-container">
+    <div class="register-card">
+        <div class="card-body">
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="error-message">
+                    @errorMessage
+                </div>
+            }
+
+            @if (!string.IsNullOrEmpty(successMessage))
+            {
+                <div class="success-message">
+                    @successMessage
+                </div>
+            }
+
+            <EditForm Model="registerInfo" OnValidSubmit="RegisterUser" FormName="RegisterForm">
+                <DataAnnotationsValidator />
+
+                <div class="form-group">
+                    <label for="username" class="form-label">Username:</label>
+                    <InputText id="username" class="form-input" @bind-Value="registerInfo.Username" placeholder="Enter your username" />
+                    <ValidationMessage For="@(() => registerInfo.Username)" class="validation-error" />
+                </div>
+
+                <div class="form-group">
+                    <label for="email" class="form-label">Email:</label>
+                    <InputText id="email" class="form-input" @bind-Value="registerInfo.Email" placeholder="Enter your email" />
+                    <ValidationMessage For="@(() => registerInfo.Email)" class="validation-error" />
+                </div>
+
+                <div class="form-group">
+                    <label for="password" class="form-label">Password:</label>
+                    <InputText id="password" type="password" class="form-input" @bind-Value="registerInfo.Password" placeholder="Enter your password" />
+                    <ValidationMessage For="@(() => registerInfo.Password)" class="validation-error" />
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmPassword" class="form-label">Confirm Password:</label>
+                    <InputText id="confirmPassword" type="password" class="form-input" @bind-Value="registerInfo.ConfirmPassword" placeholder="Confirm your password" />
+                    <ValidationMessage For="@(() => registerInfo.ConfirmPassword)" class="validation-error" />
+                </div>
+
+                <button type="submit" class="register-btn">
+                    Register
+                </button>
+            </EditForm>
+        </div>
+        <div class="card-footer">
+            <p class="login-link">Already have an account? <a href="/login">Login here</a></p>
+        </div>
+    </div>
+</div>
+
 
 @code {
 
+    [SupplyParameterFromForm]
+    private RegisterDto registerInfo { get; set; } = new RegisterDto();
+
+    private string? errorMessage;
+    private string? successMessage;
+    private bool isLoading = false;
+    private bool shouldNavigateToLogin = false;
+
+
+    private async Task RegisterUser()
+    {
+        try
+        {
+            errorMessage = null;
+            successMessage = null;
+            StateHasChanged();
+
+            if (string.IsNullOrWhiteSpace(registerInfo.Username) || registerInfo.Username.Length < 3)
+            {
+                errorMessage = "Username must be at least 3 characters long.";
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(registerInfo.Email) || !registerInfo.Email.Contains("@"))
+            {
+                errorMessage = "Please enter a valid email address.";
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(registerInfo.Password) || registerInfo.Password.Length < 6)
+            {
+                errorMessage = "Password must be at least 6 characters long.";
+                return;
+            }
+
+            if (registerInfo.Password != registerInfo.ConfirmPassword)
+            {
+                errorMessage = "Passwords do not match.";
+                return;
+            }
+
+            var result = await UserService.RegisterAsync(registerInfo);
+
+            if (result == "SUCCESS")
+            {
+                successMessage = "Account created successfully :)";
+                // StateHasChanged();
+
+                await Task.Delay(200);
+                navigationManager.NavigateTo("/login", forceLoad: true);
+            }
+            else
+            {
+                errorMessage = result;
+            }
+        }
+        catch (Microsoft.AspNetCore.Components.NavigationException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"An error occurred: {ex.Message}";
+        }
+        finally
+        {
+            StateHasChanged();
+        }
+    }
 }

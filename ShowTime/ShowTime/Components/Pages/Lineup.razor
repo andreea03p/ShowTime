@@ -1,0 +1,575 @@
+﻿@page "/lineup-management"
+@using ShowTime.BusinessLogic.Abstraction
+@using ShowTime.BusinessLogic.Dtos
+@inject IFestivalService FestivalService
+@inject IArtistService ArtistService
+@rendermode InteractiveServer
+
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body, html {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        overflow-x: hidden;
+        background: linear-gradient(135deg, rgba(0,0,0,0.7), rgba(0,0,0,0.4)), url('/images/background.jpg') center/cover;
+    }
+
+    .lineup-container {
+        min-height: 100vh;
+        width: 100%;
+        padding: 0;
+        margin: 0;
+        position: relative;
+        background-attachment: fixed;
+        background-repeat: repeat;
+        background-size: cover;
+        background: linear-gradient(135deg, rgba(0,0,0,0.7), rgba(0,0,0,0.4)), url('/images/background.jpg') center/cover;
+    }
+
+    .content-wrapper {
+        padding: 20px;
+        width: 100%;
+        height: 100%;
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    .form-section {
+        color: antiquewhite;
+        background: linear-gradient(135deg, black, white);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+
+        .form-section h3 {
+            color: #91C8E4;
+            margin-bottom: 20px;
+            font-weight: 600;
+            text-shadow: 1px 1px 2px rgba(255,255,255,0.5);
+        }
+
+    .page-title {
+        text-align: center;
+        color: #0F4D0F;
+        font-size: 2.5em;
+        margin-top: 0;
+        margin-bottom: 40px;
+        text-shadow: 1px 1px 1px white;
+        position: relative;
+        z-index: 10;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: white;
+            font-weight: 500;
+        }
+
+    .form-control {
+        width: 100%;
+        padding: 10px 15px;
+        border: 2px solid rgba(255,255,255,0.3);
+        border-radius: 8px;
+        background: rgba(255,255,255,0.8);
+        transition: all 0.3s ease;
+    }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #3498db;
+            background: rgba(255,255,255,0.95);
+            box-shadow: 0 0 0 3px rgba(52,152,219,0.1);
+        }
+
+    .btn-custom {
+        background: linear-gradient(135deg, #3498db, #2980b9);
+        color: white;
+        border: none;
+        padding: 12px 25px;
+        border-radius: 8px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(52,152,219,0.3);
+        margin-right: 10px;
+    }
+
+        .btn-custom:hover {
+            background: linear-gradient(135deg, #2980b9, #1abc9c);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52,152,219,0.4);
+        }
+
+        .btn-custom:disabled {
+            background: linear-gradient(135deg, #bdc3c7, #95a5a6);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+    .btn-delete {
+        background: linear-gradient(135deg, #e74c3c, #c0392b);
+        border-radius: 12px;
+    }
+
+        .btn-delete:hover {
+            background: linear-gradient(135deg, #c0392b, #a93226);
+        }
+
+    .btn-edit {
+        background: linear-gradient(135deg, #f39c12, #e67e22);
+        border-radius: 12px;
+    }
+
+        .btn-edit:hover {
+            background: linear-gradient(135deg, #e67e22, #d35400);
+        }
+
+    .lineup-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+        .lineup-table th {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .lineup-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            color: white;
+        }
+
+        .lineup-table tr:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+    .artist-image-small {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid #3498db;
+    }
+
+    .festival-filter {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 20px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .no-lineup {
+        text-align: center;
+        color: #ecf0f1;
+        font-size: 1.3em;
+        background: rgba(0,0,0,0.3);
+        padding: 40px;
+        border-radius: 15px;
+        backdrop-filter: blur(5px);
+    }
+
+    .validation-message {
+        color: red;
+        font-size: 0.875em;
+        margin-top: 5px;
+        display: block;
+        font-weight: 500;
+    }
+
+    .required::after {
+        content: " *";
+        color: red;
+        font-weight: bold;
+    }
+
+    .edit-form {
+        background: rgba(255,255,255,0.1);
+        padding: 20px;
+        border-radius: 10px;
+        margin-top: 20px;
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+
+    .button-group {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    @@media (max-width: 768px) {
+        .lineup-table
+
+    {
+        font-size: 0.9em;
+    }
+
+    .lineup-table th,
+    .lineup-table td {
+        padding: 8px;
+    }
+
+    .artist-image-small {
+        width: 40px;
+        height: 40px;
+    }
+
+    }
+</style>
+
+<div class="lineup-container">
+    <div class="content-wrapper">
+
+        <AuthorizeView Roles="Admin">
+            <Authorized Context="authContext">
+                <h1 class="page-title">Lineup Management</h1>
+
+                <!-- Festival Filter -->
+                <div class="form-section">
+                    <h3>Filter by Festival</h3>
+                    <div class="festival-filter">
+                        <select class="form-control" style="max-width: 300px;" @onchange="OnFestivalFilterChanged">
+                            <option value="0">All Festivals</option>
+                            @foreach (var festival in festivals)
+                            {
+                                <option value="@festival.Id">@festival.Name</option>
+                            }
+                        </select>
+                        <select class="form-control" style="max-width: 300px;" @onchange="OnArtistFilterChanged">
+                            <option value="0">All Artists</option>
+                            @foreach (var artist in artists)
+                            {
+                                <option value="@artist.Id">@artist.Name</option>
+                            }
+                        </select>
+                        <button class="btn-custom" @onclick="LoadLineupData">
+                            <i class="bi bi-arrow-clockwise"></i> Refresh
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Edit Form (shows when editing) -->
+                @if (editingLineup != null)
+                {
+                    <div class="form-section">
+                        <h3>Edit Lineup Entry</h3>
+                        <div class="edit-form">
+                            <EditForm Model="editingLineup" OnValidSubmit="UpdateLineupEntry" FormName="EditLineupForm" @ref="editFormRef">
+                                <DataAnnotationsValidator />
+
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                                    <div>
+                                        <p><strong>Festival:</strong> @editingLineup.Festival.Name</p>
+                                        <p><strong>Artist:</strong> @editingLineup.Artist.Name</p>
+                                    </div>
+                                    <div>
+                                        <img src="@editingLineup.Artist.Image" alt="@editingLineup.Artist.Name" class="artist-image-small" />
+                                    </div>
+                                </div>
+
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                                    <div class="form-group">
+                                        <label class="required">Stage</label>
+                                        <InputText @bind-Value="editDto.Stage"
+                                                   class="form-control"
+                                                   placeholder="e.g., Main Stage" />
+                                        <ValidationMessage For="@(() => editDto.Stage)" class="validation-message" />
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="required">Start Time</label>
+                                        <input type="datetime-local" @bind="editDto.StartTime"
+                                               class="form-control" />
+                                        <ValidationMessage For="@(() => editDto.StartTime)" class="validation-message" />
+                                    </div>
+                                </div>
+
+                                <div class="button-group">
+                                    <button type="submit" class="btn-custom">
+                                        <i class="bi bi-check"></i> Update Entry
+                                    </button>
+                                    <button type="button" class="btn-custom btn-delete" @onclick="CancelEdit">
+                                        <i class="bi bi-x"></i> Cancel
+                                    </button>
+                                </div>
+                            </EditForm>
+                        </div>
+                    </div>
+                }
+
+                <!-- Lineup Table -->
+                <div class="form-section">
+                    <h3>Current Lineup Entries</h3>
+
+                    @if (currentLineup.Any())
+                    {
+                        <table class="lineup-table">
+                            <thead>
+                                <tr>
+                                    <th>Artist</th>
+                                    <th>Festival</th>
+                                    <th>Stage</th>
+                                    <th>Date & Time</th>
+                                    <th>Genre</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var lineupEntry in currentLineup.OrderBy(l => l.StartTime))
+                                {
+                                    <tr>
+                                        <td>
+                                            <div style="display: flex; align-items: center; gap: 10px;">
+                                                <img src="@lineupEntry.Artist.Image" alt="@lineupEntry.Artist.Name" class="artist-image-small" />
+                                                <span>@lineupEntry.Artist.Name</span>
+                                            </div>
+                                        </td>
+                                        <td>@lineupEntry.Festival.Name</td>
+                                        <td>
+                                            <span style="background: rgba(52,152,219,0.3); padding: 4px 8px; border-radius: 15px; font-size: 0.9em;">
+                                                @lineupEntry.Stage
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div>@lineupEntry.StartTime.ToString("MMM dd, yyyy")</div>
+                                            <div style="font-size: 0.9em; opacity: 0.8;">@lineupEntry.StartTime.ToString("HH:mm")</div>
+                                        </td>
+                                        <td>
+                                            <span style="background: rgba(26,188,156,0.3); padding: 4px 8px; border-radius: 15px; font-size: 0.9em;">
+                                                @lineupEntry.Artist.Genre
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="button-group">
+                                                <button class="btn-custom btn-edit" @onclick="() => StartEdit(lineupEntry)">
+                                                    <i class="bi bi-pencil"></i>
+                                                </button>
+                                                <button class="btn-custom btn-delete" @onclick="() => ConfirmDelete(lineupEntry.FestivalId, lineupEntry.ArtistId)">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                    else
+                    {
+                        <div class="no-lineup">
+                            <i class="bi bi-music-note" style="font-size: 3em; color: #3498db; margin-bottom: 15px;"></i>
+                            <p>No lineup entries found.</p>
+                            <p style="font-size: 0.9em; margin-top: 10px; opacity: 0.8;">
+                                @if (selectedFestivalId > 0)
+                                {
+                                    <span>This festival doesn't have any artists in the lineup yet.</span>
+                                }
+                                else
+                                {
+                                    <span>Select a festival or add some artists to lineups.</span>
+                                }
+                            </p>
+                        </div>
+                    }
+                </div>
+
+            </Authorized>
+            <NotAuthorized>
+                <div class="form-section">
+                    <div class="no-lineup">
+                        <i class="bi bi-lock" style="font-size: 3em; color: #e74c3c; margin-bottom: 15px;"></i>
+                        <p>Access Denied</p>
+                        <p style="font-size: 0.9em; margin-top: 10px; opacity: 0.8;">
+                            You need administrator privileges to access this page.
+                        </p>
+                    </div>
+                </div>
+            </NotAuthorized>
+        </AuthorizeView>
+    </div>
+</div>
+
+@code {
+    private List<FestivalGetDto> festivals = new();
+    private List<ArtistGetDto> artists = new();
+
+    private List<LineupGetDto> allLineup = new();
+    private List<LineupGetDto> currentLineup = new();
+    private LineupGetDto? editingLineup;
+    private LineupUpdateDto editDto = new();
+    private EditForm? editFormRef;
+    private int selectedFestivalId = 0;
+
+    private int selectedArtistId = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        festivals = (await FestivalService.GetAllFestivalsAsync()).ToList();
+        artists = (await ArtistService.GetAllArtistsAsync()).ToList();
+        await LoadLineupData();
+    }
+
+    private async Task LoadLineupData()
+    {
+        allLineup.Clear();
+
+        foreach (var festival in festivals)
+        {
+            var festivalLineup = await FestivalService.GetCompleteLineupForFestivalAsync(festival.Id);
+            allLineup.AddRange(festivalLineup);
+        }
+
+        ApplyFilter();
+    }
+
+    private async Task LoadArtistsData()
+    {
+        allLineup.Clear();
+
+        foreach (var artist in artists)
+        {
+            var artistLineup = await ArtistService.GetAllFestivalsForArtistAsync(artist.Id);
+            allLineup.AddRange(artistLineup);
+        }
+
+        ApplyFilter();
+    }
+
+    private async Task OnFestivalFilterChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int festivalId))
+        {
+            selectedFestivalId = festivalId;
+            ApplyFilter();
+        }
+    }
+
+    private async Task OnArtistFilterChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int artistId))
+        {
+            selectedArtistId = artistId;
+            ApplyFilter();
+        }
+    }
+
+    private void ApplyFilter()
+    {
+        currentLineup = allLineup.ToList();
+
+        if (selectedFestivalId > 0)
+        {
+            currentLineup = currentLineup.Where(l => l.FestivalId == selectedFestivalId).ToList();
+        }
+
+        if (selectedArtistId > 0)
+        {
+            currentLineup = currentLineup.Where(l => l.ArtistId == selectedArtistId).ToList();
+        }
+
+        StateHasChanged();
+    }
+
+    private void StartEdit(LineupGetDto lineup)
+    {
+        editingLineup = lineup;
+        editDto = new LineupUpdateDto
+        {
+            Stage = lineup.Stage,
+            StartTime = lineup.StartTime
+        };
+        StateHasChanged();
+    }
+
+    private void CancelEdit()
+    {
+        editingLineup = null;
+        editDto = new LineupUpdateDto();
+        StateHasChanged();
+    }
+
+    private async Task UpdateLineupEntry()
+    {
+        if (editingLineup != null)
+        {
+            try
+            {
+                await FestivalService.UpdateLineupEntryAsync(
+                    editingLineup.FestivalId,
+                    editingLineup.ArtistId,
+                    editDto.Stage,
+                    editDto.StartTime);
+
+                await LoadLineupData();
+
+                editingLineup = null;
+                editDto = new LineupUpdateDto();
+
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error updating lineup: {ex.Message}");
+            }
+        }
+    }
+
+    @inject IJSRuntime JSRuntime
+
+    private async Task ConfirmDelete(int festivalId, int artistId)
+    {
+        var lineup = allLineup.FirstOrDefault(l => l.FestivalId == festivalId && l.ArtistId == artistId);
+        if (lineup != null)
+        {
+            var confirmed = await JSRuntime.InvokeAsync<bool>("confirm",
+                $"Are you sure you want to remove {lineup.Artist.Name} from {lineup.Festival.Name} lineup?");
+
+            if (confirmed)
+            {
+                await DeleteLineupEntry(festivalId, artistId);
+            }
+        }
+    }
+
+    private async Task DeleteLineupEntry(int festivalId, int artistId)
+    {
+        try
+        {
+            await FestivalService.RemoveArtistFromLineupAsync(festivalId, artistId);
+            await LoadLineupData();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error deleting lineup entry: {ex.Message}");
+        }
+    }
+}
