@@ -4,6 +4,9 @@
 @inject IFestivalService FestivalService
 @inject IArtistService ArtistService
 @rendermode InteractiveServer
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager Navigation
+
 
 <style>
     * {
@@ -180,6 +183,8 @@
         margin-bottom: 20px;
         align-items: center;
         flex-wrap: wrap;
+        justify-content:center;
+        justify-items: center;
     }
 
     .no-lineup {
@@ -247,7 +252,6 @@
             <Authorized Context="authContext">
                 <h1 class="page-title">Lineup Management</h1>
 
-                <!-- Festival Filter -->
                 <div class="form-section">
                     <h3>Filter by Festival</h3>
                     <div class="festival-filter">
@@ -265,13 +269,12 @@
                                 <option value="@artist.Id">@artist.Name</option>
                             }
                         </select>
-                        <button class="btn-custom" @onclick="LoadLineupData">
+                        @* <button class="btn-custom" @onclick="LoadLineupData">
                             <i class="bi bi-arrow-clockwise"></i> Refresh
-                        </button>
+                        </button> *@
                     </div>
                 </div>
 
-                <!-- Edit Form (shows when editing) -->
                 @if (editingLineup != null)
                 {
                     <div class="form-section">
@@ -320,7 +323,6 @@
                     </div>
                 }
 
-                <!-- Lineup Table -->
                 <div class="form-section">
                     <h3>Current Lineup Entries</h3>
 
@@ -428,6 +430,12 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadData();
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        if (!authState.User.IsInRole("Admin"))
+        {
+            Navigation.NavigateTo("/access-denied");
+        }
     }
 
     private async Task LoadData()

@@ -4,6 +4,8 @@
 @inject IFestivalService FestivalService
 @inject NavigationManager Navigation
 @rendermode InteractiveServer
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
 
 <style>
     * {
@@ -64,12 +66,15 @@
             animation: shimmer 2s infinite;
         }
 
+
     .festival-hero {
         display: grid;
         grid-template-columns: 300px 1fr;
-        gap: 30px;
+        gap: 10px;
         align-items: center;
-        margin-bottom: 20px;
+        justify-content: center;
+        margin: 0 auto 20px auto; 
+        max-width: 800px;
     }
 
     .festival-image {
@@ -80,25 +85,16 @@
         box-shadow: 0 8px 25px rgba(0,0,0,0.3);
     }
 
-    .festival-info h1 {
-        color: #3498db;
-        font-size: 2.5em;
-        margin-bottom: 10px;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-    }
-
-    .festival-info p {
-        color: white;
-        font-size: 1.1em;
-        margin-bottom: 8px;
+    .festival-info {
         display: flex;
-        align-items: center;
-        gap: 10px;
+        flex-direction: column;
+        justify-content: center;
+        color: #1abc9c;
+        margin-left: 10px;
     }
 
-    .festival-info i {
-        color: #1abc9c;
-        font-size: 1.2em;
+    .festival-header {
+        text-align: center;
     }
 
     .section-card {
@@ -362,7 +358,10 @@
                         <h1>@festival.Name</h1>
                         <p><i class="bi bi-calendar"></i> @festival.StartDate.ToString("MMM dd, yyyy") - @festival.EndDate.ToString("MMM dd, yyyy")</p>
                         <p><i class="bi bi-geo-alt"></i> @festival.Address</p>
-                        <p><i class="bi bi-map"></i> see on map </p>
+                        <p>
+                            <i class="bi bi-map"></i>
+                            <a href="/map?showFestival=@festival.Id">see on map</a>
+                        </p>
                     </div>
                 </div>
 
@@ -522,6 +521,12 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadFestivalData();
+
+        // var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        // if (!authState.User.IsInRole("Admin, User"))
+        // {
+        //     Navigation.NavigateTo("/access-denied");
+        // }
     }
 
     private async Task LoadFestivalData()

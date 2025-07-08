@@ -144,9 +144,6 @@
         </p>
 
         <div class="access-denied-actions">
-            <button class="btn btn-primary" @onclick="GoBack">
-                Go Back
-            </button>
             <a href="/" class="btn btn-secondary">
                 Return to Home
             </a>
@@ -166,9 +163,4 @@
 
     [Inject]
     private IJSRuntime JSRuntime { get; set; } = default!;
-
-    private async Task GoBack()
-    {
-        await JSRuntime.InvokeVoidAsync("history.back");
-    }
 }

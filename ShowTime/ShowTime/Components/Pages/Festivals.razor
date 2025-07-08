@@ -120,7 +120,7 @@
         }
 
     .btn-view {
-        background: linear-gradient(135deg, #2D4F2B, blue);
+        background: linear-gradient(90deg,rgba(42, 123, 155, 1) 0%, rgba(87, 199, 133, 1) 50%, rgba(237, 221, 83, 1) 100%);
         border-radius: 12px;
     }
 
@@ -484,10 +484,10 @@
                             <div class="form-group">
                                 <label class="required">Start Date</label>
                                 <InputDate Type="InputDateType.DateTimeLocal"
-                                            @bind-Value="newLineup.StartTime" 
+                                           @bind-Value="newLineup.StartTime" 
                                            @bind-Value:format="dd/MM/yyyy hh:mm:ss"
-                                          class="form-control"
-                                          @oninput="OnLineupFieldChanged" />
+                                           class="form-control"
+                                           @oninput="OnLineupFieldChanged" />
                                 <ValidationMessage For="@(() => updatedFestival.EndDate)" class="validation-message" />
                             </div>
 
@@ -530,12 +530,12 @@
                             </div>
 
                             <div class="button-group">
+                                <button type="button" class="btn-custom btn-view" @onclick="() => ViewFestivalDetails(fest.Id)">
+                                     <i class="bi bi-eye"></i>
+                                     View Details
+                                </button>
                                 <AuthorizeView Roles="Admin, User">
                                     <Authorized>
-                                        <button type="button" class="btn-custom btn-view" @onclick="() => ViewFestivalDetails(fest.Id)">
-                                            <i class="bi bi-eye"></i>
-                                            View Details
-                                        </button>
                                         <button type="button" class="btn-custom btn-delete" onclick="window.location.href='tickets'">
                                             <i class="bi bi-ticket-detailed-fill"></i>
                                             Tickets
@@ -614,15 +614,22 @@
 
     private async Task AddArtistToFestivalLineup()
     {
-        try
+    try
+    {
+        if (!newLineup.StartTime.HasValue)
         {
-            if (!newLineup.StartTime.HasValue)
-            {
-                await JSRuntime.InvokeVoidAsync("alert", "Please select a start time for the performance.");
-                return;
-            }
+            await JSRuntime.InvokeVoidAsync("alert", "Please select a start time for the performance.");
+            return;
+        }
 
-            var startTime = newLineup.StartTime.Value;
+        var festStart = festivals.FirstOrDefault(f => f.Id == newLineup.FestivalId)?.StartDate;
+        var festEnd = festivals.FirstOrDefault(f => f.Id == newLineup.FestivalId)?.EndDate.AddDays(1);
+        var startTime = newLineup.StartTime.Value;
+        if(startTime < festStart || startTime > festEnd)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Artist must perform between: {festStart} and {festEnd}");
+            return;
+        }
 
             var selectedFestival = festivals.FirstOrDefault(f => f.Id == newLineup.FestivalId);
             var selectedArtist = artists.FirstOrDefault(a => a.Id == newLineup.ArtistId);

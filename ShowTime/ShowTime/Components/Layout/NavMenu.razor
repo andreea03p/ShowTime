@@ -12,7 +12,7 @@
                 <img src="/images/logo.png" alt="Logo" class="logo-circle" />
             </NavLink>
         </div>
-        <AuthorizeView Roles="Admin, User">
+        <AuthorizeView Roles="Admin,User">
             <Authorized>
                 <div class="navbar-logout">
                     <div class="nav-item logout-item">
@@ -23,6 +23,16 @@
                     </div>
                 </div>
             </Authorized>
+            <NotAuthorized>
+                <div class="navbar-login">
+                    <div class="nav-item login-item">
+                        <NavLink class="nav-link login-link" href="login"
+                                 style="background: #007bff !important; color: white !important; border-radius: 40px !important;">
+                            <span class="bi bi-box-arrow-in-right" aria-hidden="true"></span> Login
+                        </NavLink>
+                    </div>
+                </div>
+            </NotAuthorized>
         </AuthorizeView>
     </div>
 

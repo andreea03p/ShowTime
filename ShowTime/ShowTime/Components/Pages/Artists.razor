@@ -34,7 +34,7 @@
     }
 
     .content-wrapper {
-        padding: 80px 20px 20px 20px;
+        padding: 40px 20px 20px 20px;
         width: 100%;
         height: 100%;
     }
@@ -193,7 +193,6 @@
         justify-content: center;
     }
 
-    /* New styles for festival information */
     .artist-festivals {
         flex: 1;
         margin-top: 15px;
@@ -465,26 +464,26 @@
                                 <div class="festivals-header">
                                     <i class="bi bi-calendar-event"></i>
                                     Festival Performances
-                                    @if (artistFestivals.ContainsKey(artist.Id) && artistFestivals[artist.Id].Any())
+                                    @if (artistFestivals?.ContainsKey(artist.Id) == true && artistFestivals[artist.Id]?.Any() == true)
                                     {
                                         <span class="festival-count">@artistFestivals[artist.Id].Count</span>
                                     }
                                 </div>
-
-                                @if (loadingFestivals.Contains(artist.Id))
+    
+                                @if (loadingFestivals?.Contains(artist.Id) == true)
                                 {
                                     <div class="loading-festivals">
                                         <i class="bi bi-clock"></i> Loading performances...
                                     </div>
                                 }
-                                else if (artistFestivals.ContainsKey(artist.Id) && artistFestivals[artist.Id].Any())
+                                else if (artistFestivals?.ContainsKey(artist.Id) == true && artistFestivals[artist.Id]?.Any() == true)
                                 {
                                     @foreach (var performance in artistFestivals[artist.Id].OrderBy(p => p.StartTime))
                                     {
                                         <div class="festival-item">
                                             <div class="festival-name">
                                                 <i class="bi bi-music-note-beamed"></i>
-                                                @performance.Festival.Name
+                                                @performance.Festival?.Name
                                             </div>
                                             <div class="festival-details">
                                                 <div class="festival-stage">
@@ -547,17 +546,26 @@
 
     protected override async Task OnInitializedAsync()
     {
-        artists = await ArtistService.GetAllArtistsAsync();
-        await LoadAllArtistFestivals();
+        try
+        {
+            artists = await ArtistService.GetAllArtistsAsync();
+            StateHasChanged();
+        
+            await LoadAllArtistFestivals();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error initializing component: {ex.Message}");
+        }
     }
 
     private async Task LoadAllArtistFestivals()
     {
-        var tasks = artists.Select(async artist =>
+        foreach (var artist in artists)
         {
             loadingFestivals.Add(artist.Id);
             StateHasChanged();
-            
+        
             try
             {
                 var festivals = await ArtistService.GetAllFestivalsForArtistAsync(artist.Id);
@@ -572,10 +580,9 @@
                 loadingFestivals.Remove(artist.Id);
                 StateHasChanged();
             }
-        });
-
-        await Task.WhenAll(tasks);
+        }
     }
+
 
     private async Task AddArtist()
     {

@@ -172,7 +172,7 @@ public class FestivalService : IFestivalService
                         FestivalId = lineup.FestivalId,
                         ArtistId = lineup.ArtistId,
                         Stage = lineup.Stage,
-                        StartTime = DateTimeOffset.Now,
+                        StartTime = lineup.StartTime,
                         Festival = new FestivalGetDto
                         {
                             Id = festival.Id,
@@ -256,7 +256,7 @@ public class FestivalService : IFestivalService
                 ArtistId = artistId,
                 Artist = targetArtist,
                 Stage = stage.Trim(),
-                StartTime = DateTime.Today
+                StartTime = startTime
             };
 
             await _lineupRepository.AddAsync(lineup);
