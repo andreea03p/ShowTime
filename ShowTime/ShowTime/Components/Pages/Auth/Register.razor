@@ -262,6 +262,9 @@
     [SupplyParameterFromForm]
     private RegisterDto registerInfo { get; set; } = new RegisterDto();
 
+    [CascadingParameter]
+    private HttpContext httpContext { get; set; } = null!;
+
     private string? errorMessage;
     private string? successMessage;
     private bool isLoading = false;
@@ -308,17 +311,18 @@
                 // StateHasChanged();
 
                 await Task.Delay(200);
-                navigationManager.NavigateTo("/login", forceLoad: true);
+                // navigationManager.NavigateTo("/login", forceLoad: true);
+                httpContext.Response.Redirect("/login", true);
             }
             else
             {
                 errorMessage = result;
             }
         }
-        catch (Microsoft.AspNetCore.Components.NavigationException)
-        {
-            throw;
-        }
+        // catch (Microsoft.AspNetCore.Components.NavigationException)
+        // {
+        //     throw;
+        // }
         catch (Exception ex)
         {
             errorMessage = $"An error occurred: {ex.Message}";

@@ -49,15 +49,19 @@
                 </NavLink>
             </div>
             <div class="nav-item">
-                <NavLink class="nav-link" href="tickets">
-                    <span class="bi bi-ticket-perforated" aria-hidden="true"></span> Tickets
-                </NavLink>
-            </div>
-            <div class="nav-item">
                 <NavLink class="nav-link" href="artists">
                     <span class="bi bi-lightning" aria-hidden="true"></span> Artists
                 </NavLink>
             </div>
+            <AuthorizeView Roles="Admin,User">
+                <Authorized>
+            <div class="nav-item">
+                <NavLink class="nav-link" href="cart">
+                    <span class="bi bi-cart" aria-hidden="true"></span> Cart
+                </NavLink>
+            </div>
+                </Authorized>   
+            </AuthorizeView>
         </nav>
     </div>
 </div>

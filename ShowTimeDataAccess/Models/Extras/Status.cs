@@ -4,12 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ShowTime.DataAccess.Models.Enums;
+namespace ShowTime.DataAccess.Models.Extras;
 
-public enum TicketType
+public enum Status
 {
-    Earlybird = 0,
-    Standard = 1,
-    VIP = 2
+    Pending = 0,
+    Done = 1,
 }
-

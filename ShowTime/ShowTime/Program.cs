@@ -39,10 +39,16 @@ builder.Services.AddTransient<IGenericRepository<Artist>, GenericRepository<Arti
 builder.Services.AddTransient<IGenericRepository<Festival>, GenericRepository<Festival>>();
 builder.Services.AddTransient<IGenericRepository<User>, GenericRepository<User>>();
 builder.Services.AddTransient<IGenericRepository<Lineup>, GenericRepository<Lineup>>();
+builder.Services.AddTransient<IGenericRepository<Booking>, GenericRepository<Booking>>();
+builder.Services.AddTransient<IGenericRepository<Ticket>, GenericRepository<Ticket>>();
+
 
 builder.Services.AddTransient<IArtistService, ArtistService>();
 builder.Services.AddTransient<IFestivalService, FestivalService>();
 builder.Services.AddTransient<IUserService, UserService>();
+builder.Services.AddTransient<IBookingService, BookingService>();
+builder.Services.AddTransient<ITicketService, TicketService>();
+
 
 builder.Services.AddServerSideBlazor(options =>
 {

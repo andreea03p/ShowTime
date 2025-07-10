@@ -10,15 +10,12 @@ namespace ShowTime.DataAccess.Models;
 
 public class Booking
 {
-    public int FestivalId { get; set; }
+    public int Id { get; set; }
+    public int TicketId { get; set; }
     public int UserId { get; set; }
-    public int Price { get; set; }
-    public TicketType TicketType { get; set; }
+    public int Quantity { get; set; }
+    public Status BookingStatus { get; set; } = Status.Pending;
 
-    public User User { get; set; } = new User();
-    public Festival Festival { get; set; } = new Festival
-    {
-        Location = new Location()
-    };
-
+    public virtual User User { get; set; } = new User();
+    public virtual Ticket Ticket { get; set; } = new Ticket();
 }

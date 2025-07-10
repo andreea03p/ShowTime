@@ -1,0 +1,851 @@
+﻿@page "/festivals-management"
+@using ShowTime.BusinessLogic.Abstraction
+@using ShowTime.BusinessLogic.Dtos
+@using ShowTime.DataAccess.Models
+@inject IFestivalService FestivalService
+@inject IArtistService ArtistService
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+@rendermode InteractiveServer
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body, html {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        overflow-x: hidden;
+        background: linear-gradient(135deg, rgba(0,0,0,0.7), rgba(0,0,0,0.4)), url('/images/background.jpg') center/cover;
+    }
+
+    .festivals-container {
+        min-height: 100vh;
+        width: 100%;
+        padding: 0;
+        margin: 0;
+        position: relative;
+        background-attachment: fixed;
+        background-repeat: no-repeat;
+        background-size: cover;
+        background: linear-gradient(135deg, rgba(0,0,0,0.7), rgba(0,0,0,0.4)), url('/images/background.jpg') center/cover;
+    }
+
+    .content-wrapper {
+        padding: 20px;
+        width: 100%;
+        height: 100%;
+    }
+
+    .form-section {
+        color: antiquewhite;
+        background: linear-gradient(135deg, black, darkgrey);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+
+        .form-section h3 {
+            color: #91C8E4;
+            margin-bottom: 20px;
+            font-weight: 600;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: white;
+            font-weight: 500;
+        }
+
+    .form-control {
+        width: 100%;
+        padding: 10px 15px;
+        border: 2px solid rgba(255,255,255,0.3);
+        border-radius: 8px;
+        background: rgba(255,255,255,0.8);
+        transition: all 0.3s ease;
+        color: #333;
+    }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #3498db;
+            background: rgba(255,255,255,0.95);
+            box-shadow: 0 0 0 3px rgba(52,152,219,0.1);
+        }
+
+    .btn-custom {
+        background: linear-gradient(135deg, #3498db, #2980b9);
+        color: white;
+        border: none;
+        padding: 12px 25px;
+        border-radius: 8px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(52,152,219,0.3);
+        margin-right: 10px;
+    }
+
+        .btn-custom:hover {
+            background: linear-gradient(135deg, #2980b9, #1abc9c);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52,152,219,0.4);
+        }
+
+        .btn-custom:disabled {
+            background: linear-gradient(135deg, #bdc3c7, #95a5a6);
+            cursor: not-allowed;
+            transform: none;
+            opacity: 0.6;
+        }
+
+    .page-title {
+        text-align: center;
+        color: #0F4D0F;
+        font-size: 2.5em;
+        margin-bottom: 20px;
+        text-shadow: 1px 1px 1px white;
+        position: relative;
+        z-index: 10;
+    }
+
+    .forms-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 30px;
+        margin-bottom: 30px;
+    }
+
+    .validation-message {
+        color: #e74c3c;
+        font-size: 0.875em;
+        margin-top: 5px;
+        display: block;
+        font-weight: 500;
+        background: rgba(231, 76, 60, 0.1);
+        padding: 5px 10px;
+        border-radius: 4px;
+        border-left: 3px solid #e74c3c;
+    }
+
+    .form-control:invalid {
+        border-color: #e74c3c;
+        box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);
+    }
+
+    .form-control:valid:not(:placeholder-shown) {
+        border-color: #27ae60;
+        box-shadow: 0 0 0 3px rgba(39, 174, 96, 0.1);
+    }
+
+    .required::after {
+        content: " *";
+        color: #e74c3c;
+        font-weight: bold;
+    }
+
+    .form-description {
+        color: #bdc3c7;
+        font-size: 0.9em;
+        margin-bottom: 15px;
+        font-style: italic;
+    }
+
+    .festival-selector {
+        margin-bottom: 20px;
+    }
+
+    .success-message {
+        color: #27ae60;
+        background: rgba(39, 174, 96, 0.1);
+        padding: 10px 15px;
+        border-radius: 8px;
+        border-left: 4px solid #27ae60;
+        margin-bottom: 20px;
+        display: none;
+    }
+
+        .success-message.show {
+            display: block;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+    .error-message {
+        color: #e74c3c;
+        background: rgba(231, 76, 60, 0.1);
+        padding: 10px 15px;
+        border-radius: 8px;
+        border-left: 4px solid #e74c3c;
+        margin-bottom: 20px;
+        display: none;
+    }
+
+        .error-message.show {
+            display: block;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+
+    .date-input-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .coordinate-group {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+
+    @@keyframes fadeIn {
+        from
+
+    {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    }
+
+    @@media (max-width: 768px) {
+        .forms-container
+
+    {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .form-row, .coordinate-group {
+        grid-template-columns: 1fr;
+    }
+
+    .content-wrapper {
+        padding: 15px;
+    }
+
+    .page-title {
+        font-size: 2em;
+    }
+
+    }
+</style>
+
+<div class="festivals-container">
+    <div class="content-wrapper">
+        <AuthorizeView Roles="Admin">
+            <Authorized Context="authContext">
+                <h1 class="page-title">Festivals Management</h1>
+
+                <div class="forms-container">
+
+                    <div class="form-section">
+                        <h3>Add New Festival</h3>
+                        <p class="form-description">Create a new festival by filling out all the required information below.</p>
+
+                        @if (showAddSuccess)
+                        {
+                            <div class="success-message show">
+                                <strong>Success!</strong> Festival has been added successfully.
+                            </div>
+                        }
+
+                        @if (!string.IsNullOrEmpty(addErrorMessage))
+                        {
+                            <div class="error-message show">
+                                <strong>Error!</strong> @addErrorMessage
+                            </div>
+                        }
+
+                        <EditForm Model="newFestival" OnValidSubmit="AddFestival" OnInvalidSubmit="OnAddInvalidSubmit" FormName="AddFestivalForm" @ref="addFormRef">
+                            <DataAnnotationsValidator />
+
+                            <div class="form-group">
+                                <label class="required">Festival Name</label>
+                                <InputText @bind-Value="newFestival.Name"
+                                           class="form-control"
+                                           placeholder="Enter festival name" />
+                                <ValidationMessage For="@(() => newFestival.Name)" class="validation-message" />
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="required">Start Date</label>
+                                    <InputDate @bind-Value="newFestival.StartDate"
+                                               class="form-control" />
+                                    <ValidationMessage For="@(() => newFestival.StartDate)" class="validation-message" />
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="required">End Date</label>
+                                    <InputDate @bind-Value="newFestival.EndDate"
+                                               class="form-control" />
+                                    <ValidationMessage For="@(() => newFestival.EndDate)" class="validation-message" />
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="required">Festival Address</label>
+                                <InputText @bind-Value="newFestival.Address"
+                                           class="form-control"
+                                           placeholder="Enter festival address" />
+                                <ValidationMessage For="@(() => newFestival.Address)" class="validation-message" />
+                            </div>
+
+                            <div class="coordinate-group">
+                                <div class="form-group">
+                                    <label class="required">Latitude</label>
+                                    <InputNumber @bind-Value="newFestival.Latitude"
+                                                 class="form-control"
+                                                 placeholder="e.g., 45.7494" />
+                                    <ValidationMessage For="@(() => newFestival.Latitude)" class="validation-message" />
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="required">Longitude</label>
+                                    <InputNumber @bind-Value="newFestival.Longitude"
+                                                 class="form-control"
+                                                 placeholder="e.g., 21.2272" />
+                                    <ValidationMessage For="@(() => newFestival.Longitude)" class="validation-message" />
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="required">SplashArt URL</label>
+                                <InputText @bind-Value="newFestival.SplashArt"
+                                           class="form-control"
+                                           placeholder="https://example.com/image.jpg" />
+                                <ValidationMessage For="@(() => newFestival.SplashArt)" class="validation-message" />
+                            </div>
+
+                            <div class="form-group">
+                                <label class="required">Festival Capacity</label>
+                                <InputNumber @bind-Value="newFestival.Capacity"
+                                             class="form-control"
+                                             placeholder="e.g., 10000" />
+                                <ValidationMessage For="@(() => newFestival.Capacity)" class="validation-message" />
+                            </div>
+
+                            <button type="submit" class="btn-custom">
+                                Add Festival
+                            </button>
+                        </EditForm>
+                    </div>
+
+
+                    <div class="form-section">
+                        <h3>Update Festival</h3>
+                        <p class="form-description">Select a festival from the dropdown to update its information.</p>
+
+                        @if (showUpdateSuccess)
+                        {
+                            <div class="success-message show">
+                                <strong>Success!</strong> Festival has been updated successfully.
+                            </div>
+                        }
+
+                        @if (!string.IsNullOrEmpty(updateErrorMessage))
+                        {
+                            <div class="error-message show">
+                                <strong>Error!</strong> @updateErrorMessage
+                            </div>
+                        }
+
+                        <div class="festival-selector">
+                            <label>Select Festival to Update</label>
+                            <select class="form-control" @onchange="OnFestivalSelected">
+                                <option value="">-- Select a Festival --</option>
+                                @foreach (var festival in festivals)
+                                {
+                                    <option value="@festival.Id">@festival.Name</option>
+                                }
+                            </select>
+                        </div>
+
+                        <EditForm Model="updatedFestival" OnValidSubmit="UpdateFestival" OnInvalidSubmit="OnUpdateInvalidSubmit" FormName="UpdateFestivalForm" @ref="updateFormRef">
+                            <DataAnnotationsValidator />
+
+                            <div class="form-group">
+                                <label class="required">Festival Name</label>
+                                <InputText @bind-Value="updatedFestival.Name"
+                                           class="form-control"
+                                           disabled="@(selectedFestivalId == 0)" />
+                                <ValidationMessage For="@(() => updatedFestival.Name)" class="validation-message" />
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="required">Start Date</label>
+                                    <InputDate @bind-Value="updatedFestival.StartDate"
+                                               class="form-control"
+                                               disabled="@(selectedFestivalId == 0)" />
+                                    <ValidationMessage For="@(() => updatedFestival.StartDate)" class="validation-message" />
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="required">End Date</label>
+                                    <InputDate @bind-Value="updatedFestival.EndDate"
+                                               class="form-control"
+                                               disabled="@(selectedFestivalId == 0)" />
+                                    <ValidationMessage For="@(() => updatedFestival.EndDate)" class="validation-message" />
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="required">Festival Address</label>
+                                <InputText @bind-Value="updatedFestival.Address"
+                                           class="form-control"
+                                           disabled="@(selectedFestivalId == 0)" />
+                                <ValidationMessage For="@(() => updatedFestival.Address)" class="validation-message" />
+                            </div>
+
+                            <div class="coordinate-group">
+                                <div class="form-group">
+                                    <label class="required">Latitude</label>
+                                    <InputNumber @bind-Value="updatedFestival.Latitude"
+                                                 class="form-control"
+                                                 disabled="@(selectedFestivalId == 0)" />
+                                    <ValidationMessage For="@(() => updatedFestival.Latitude)" class="validation-message" />
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="required">Longitude</label>
+                                    <InputNumber @bind-Value="updatedFestival.Longitude"
+                                                 class="form-control"
+                                                 disabled="@(selectedFestivalId == 0)" />
+                                    <ValidationMessage For="@(() => updatedFestival.Longitude)" class="validation-message" />
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="required">SplashArt URL</label>
+                                <InputText @bind-Value="updatedFestival.SplashArt"
+                                           class="form-control"
+                                           disabled="@(selectedFestivalId == 0)" />
+                                <ValidationMessage For="@(() => updatedFestival.SplashArt)" class="validation-message" />
+                            </div>
+
+                            <div class="form-group">
+                                <label class="required">Festival Capacity</label>
+                                <InputNumber @bind-Value="updatedFestival.Capacity"
+                                             class="form-control"
+                                             disabled="@(selectedFestivalId == 0)" />
+                                <ValidationMessage For="@(() => updatedFestival.Capacity)" class="validation-message" />
+                            </div>
+
+                            <button type="submit" class="btn-custom" disabled="@(selectedFestivalId == 0)">
+                                Update Festival
+                            </button>
+                        </EditForm>
+                    </div>
+
+
+                    <div class="form-section">
+                        <h3>Add Artist to Festival Lineup</h3>
+                        <p class="form-description">Schedule an artist performance at a specific festival and stage.</p>
+
+                        @if (showLineupSuccess)
+                        {
+                            <div class="success-message show">
+                                <strong>Success!</strong> Artist has been added to the festival lineup.
+                            </div>
+                        }
+
+                        @if (!string.IsNullOrEmpty(lineupErrorMessage))
+                        {
+                            <div class="error-message show">
+                                <strong>Error!</strong> @lineupErrorMessage
+                            </div>
+                        }
+
+                        <EditForm Model="newLineup" OnValidSubmit="AddArtistToFestivalLineup" OnInvalidSubmit="OnLineupInvalidSubmit" FormName="AddLineupForm" @ref="lineupFormRef">
+                            <DataAnnotationsValidator />
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="required">Select Festival</label>
+                                    <InputSelect @bind-Value="newLineup.FestivalId" class="form-control">
+                                        <option value="0">-- Select Festival --</option>
+                                        @foreach (var festival in festivals)
+                                        {
+                                            <option value="@festival.Id">@festival.Name</option>
+                                        }
+                                    </InputSelect>
+                                    <ValidationMessage For="@(() => newLineup.FestivalId)" class="validation-message" />
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="required">Select Artist</label>
+                                    <InputSelect @bind-Value="newLineup.ArtistId" class="form-control">
+                                        <option value="0">-- Select Artist --</option>
+                                        @foreach (var artist in artists)
+                                        {
+                                            <option value="@artist.Id">@artist.Name</option>
+                                        }
+                                    </InputSelect>
+                                    <ValidationMessage For="@(() => newLineup.ArtistId)" class="validation-message" />
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="required">Stage</label>
+                                <InputText @bind-Value="newLineup.Stage"
+                                           class="form-control"
+                                           placeholder="e.g., Main Stage, Second Stage" />
+                                <ValidationMessage For="@(() => newLineup.Stage)" class="validation-message" />
+                            </div>
+
+                            <div class="form-group">
+                                <label class="required">Performance Date & Time</label>
+                                <InputDate Type="InputDateType.DateTimeLocal"
+                                           @bind-Value="newLineup.StartTime"
+                                           class="form-control" />
+                                <ValidationMessage For="@(() => newLineup.StartTime)" class="validation-message" />
+                            </div>
+
+                            <button type="submit" class="btn-custom">
+                                Add to Lineup
+                            </button>
+                        </EditForm>
+                    </div>
+                </div>
+            </Authorized>
+        </AuthorizeView>
+    </div>
+</div>
+
+@code {
+    private IList<FestivalGetDto> festivals = new List<FestivalGetDto>();
+    private IList<ArtistGetDto> artists = new List<ArtistGetDto>();
+    private bool showAddSuccess = false;
+    private bool showUpdateSuccess = false;
+    private bool showLineupSuccess = false;
+    private string addErrorMessage = string.Empty;
+    private string updateErrorMessage = string.Empty;
+    private string lineupErrorMessage = string.Empty;
+
+    [SupplyParameterFromForm]
+    private FestivalCreateDto newFestival { get; set; } = new FestivalCreateDto();
+
+    [SupplyParameterFromForm]
+    private FestivalUpdateDto updatedFestival { get; set; } = new FestivalUpdateDto();
+
+    [SupplyParameterFromForm]
+    private LineupCreateDto newLineup { get; set; } = new LineupCreateDto();
+
+    private int selectedFestivalId = 0;
+    private EditForm? addFormRef;
+    private EditForm? updateFormRef;
+    private EditForm? lineupFormRef;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        if (!authState.User.IsInRole("Admin"))
+        {
+            Navigation.NavigateTo("/access-denied");
+        }
+
+        try
+        {
+            festivals = await FestivalService.GetAllFestivalsAsync();
+            artists = await ArtistService.GetAllArtistsAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error initializing component: {ex.Message}");
+        }
+    }
+
+    private async Task AddFestival()
+    {
+        try
+        {
+            addErrorMessage = string.Empty;
+
+            if (newFestival.EndDate < newFestival.StartDate)
+            {
+                addErrorMessage = "End date cannot be before start date.";
+                StateHasChanged();
+                return;
+            }
+
+            await FestivalService.AddFestivalAsync(newFestival);
+            newFestival = new FestivalCreateDto();
+            festivals = await FestivalService.GetAllFestivalsAsync();
+
+            showAddSuccess = true;
+            StateHasChanged();
+
+            await Task.Delay(3000);
+            showAddSuccess = false;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            addErrorMessage = ex.Message;
+            StateHasChanged();
+        }
+    }
+
+    private async Task UpdateFestival()
+    {
+        try
+        {
+            updateErrorMessage = string.Empty;
+
+            if (selectedFestivalId > 0)
+            {
+                if (updatedFestival.EndDate < updatedFestival.StartDate)
+                {
+                    updateErrorMessage = "End date cannot be before start date.";
+                    StateHasChanged();
+                    return;
+                }
+
+                await FestivalService.UpdateFestivalAsync(updatedFestival, selectedFestivalId);
+                updatedFestival = new FestivalUpdateDto();
+                selectedFestivalId = 0;
+                festivals = await FestivalService.GetAllFestivalsAsync();
+
+                showUpdateSuccess = true;
+                StateHasChanged();
+
+                await Task.Delay(3000);
+                showUpdateSuccess = false;
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            updateErrorMessage = ex.Message;
+            StateHasChanged();
+        }
+    }
+
+    private async Task AddArtistToFestivalLineup()
+    {
+        try
+        {
+            lineupErrorMessage = string.Empty;
+
+            if (!newLineup.StartTime.HasValue)
+            {
+                lineupErrorMessage = "Please select a start time for the performance.";
+                StateHasChanged();
+                return;
+            }
+
+            var selectedFestival = festivals.FirstOrDefault(f => f.Id == newLineup.FestivalId);
+            if (selectedFestival == null)
+            {
+                lineupErrorMessage = "Please select a valid festival.";
+                StateHasChanged();
+                return;
+            }
+
+            var festStart = selectedFestival.StartDate;
+            var festEnd = selectedFestival.EndDate.AddDays(1);
+            var startTime = newLineup.StartTime.Value;
+
+            if (startTime < festStart || startTime > festEnd)
+            {
+                lineupErrorMessage = $"Artist must perform between {festStart:yyyy-MM-dd} and {festEnd:yyyy-MM-dd}.";
+                StateHasChanged();
+                return;
+            }
+
+            var selectedArtist = artists.FirstOrDefault(a => a.Id == newLineup.ArtistId);
+            if (selectedArtist == null)
+            {
+                lineupErrorMessage = "Please select a valid artist.";
+                StateHasChanged();
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(newLineup.Stage))
+            {
+                lineupErrorMessage = "Please enter a stage name.";
+                StateHasChanged();
+                return;
+            }
+
+            var isArtistAvailable = await CheckArtistAvailability(newLineup.ArtistId, startTime);
+            if (!isArtistAvailable)
+            {
+                lineupErrorMessage = $"This artist is already scheduled to perform at {startTime:yyyy-MM-dd HH:mm}. Please choose a different time.";
+                StateHasChanged();
+                return;
+            }
+
+            var isStageAvailable = await CheckStageAvailability(newLineup.FestivalId, newLineup.Stage, startTime);
+            if (!isStageAvailable)
+            {
+                lineupErrorMessage = $"The {newLineup.Stage} is already booked at {startTime:yyyy-MM-dd HH:mm}. Please choose a different time or stage.";
+                StateHasChanged();
+                return;
+            }
+
+            await FestivalService.AddArtistToFestivalLineupAsync(
+                newLineup.FestivalId,
+                newLineup.ArtistId,
+                newLineup.Stage,
+                startTime);
+
+            newLineup = new LineupCreateDto();
+
+            showLineupSuccess = true;
+            StateHasChanged();
+
+            await Task.Delay(3000);
+            showLineupSuccess = false;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            lineupErrorMessage = ex.Message;
+            StateHasChanged();
+        }
+    }
+
+    private async Task<bool> CheckArtistAvailability(int artistId, DateTime startTime)
+    {
+        try
+        {
+            var artistLineups = await FestivalService.GetCompleteLineupForFestivalAsync(artistId);
+
+            var performanceDuration = TimeSpan.FromHours(2);
+            var endTime = startTime.Add(performanceDuration);
+
+            var hasConflict = artistLineups.Any(lineup =>
+            {
+                var existingStart = lineup.StartTime;
+                var existingEnd = existingStart.Add(performanceDuration);
+
+                return (startTime < existingEnd && endTime > existingStart);
+            });
+
+            return !hasConflict;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error checking artist availability: {ex.Message}");
+            return false;
+        }
+    }
+ 
+            private async Task<bool> CheckStageAvailability(int festivalId, string stage, DateTime startTime)  
+            {  
+                try  
+                {  
+                    var allLineups = await FestivalService.GetCompleteLineupForFestivalAsync(festivalId);  
+
+                    var stageLineups = allLineups.Where(lineup => lineup.Stage.Equals(stage, StringComparison.OrdinalIgnoreCase));  
+
+                    var performanceDuration = TimeSpan.FromHours(2);  
+                    var endTime = startTime.Add(performanceDuration);  
+
+                    var hasConflict = stageLineups.Any(lineup =>  
+                    {  
+                        var existingStart = lineup.StartTime;  
+                        var existingEnd = existingStart.Add(performanceDuration);  
+
+                        return (startTime < existingEnd && endTime > existingStart);  
+                    });  
+
+                    return !hasConflict;  
+                }  
+                catch (Exception ex)  
+                {  
+                    Console.WriteLine($"Error checking stage availability: {ex.Message}");  
+                    return false;
+                }  
+            }  
+ 
+
+    private async Task OnFestivalSelected(ChangeEventArgs e)
+    {
+        try
+        {
+            if (int.TryParse(e.Value?.ToString(), out int festivalId) && festivalId > 0)
+            {
+                selectedFestivalId = festivalId;
+                var selectedFestival = await FestivalService.GetFestivalByIdAsync(festivalId);
+
+                if (selectedFestival != null)
+                {
+                    updatedFestival.Name = selectedFestival.Name;
+                    updatedFestival.StartDate = selectedFestival.StartDate;
+                    updatedFestival.EndDate = selectedFestival.EndDate;
+                    updatedFestival.Address = selectedFestival.Address;
+                    updatedFestival.Latitude = selectedFestival.Latitude;
+                    updatedFestival.Longitude = selectedFestival.Longitude;
+                    updatedFestival.SplashArt = selectedFestival.SplashArt;
+                    updatedFestival.Capacity = selectedFestival.Capacity;
+                    StateHasChanged();
+                }
+            }
+            else
+            {
+                selectedFestivalId = 0;
+                updatedFestival = new FestivalUpdateDto();
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error selecting festival: {ex.Message}");
+        }
+    }
+
+    private void OnAddInvalidSubmit()
+    {
+        addFormRef?.EditContext?.Validate();
+        StateHasChanged();
+    }
+
+    private void OnUpdateInvalidSubmit()
+    {
+        updateFormRef?.EditContext?.Validate();
+        StateHasChanged();
+    }
+
+    private void OnLineupInvalidSubmit()
+    {
+        lineupFormRef?.EditContext?.Validate();
+        StateHasChanged();
+    }
+
+    private async Task HideMessages()
+    {
+        await Task.Delay(100);
+        addErrorMessage = string.Empty;
+        updateErrorMessage = string.Empty;
+        lineupErrorMessage = string.Empty;
+        StateHasChanged();
+    }
+}

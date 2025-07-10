@@ -1,0 +1,456 @@
+﻿@page "/artists-management"
+@using ShowTime.BusinessLogic.Abstraction
+@using ShowTime.BusinessLogic.Dtos
+@using ShowTime.DataAccess.Models.Extras
+@inject IArtistService ArtistService
+@inject IFestivalService FestivalService
+@inject IJSRuntime JSRuntime
+@rendermode InteractiveServer
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager Navigation
+
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body, html {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        overflow-x: hidden;
+        background: linear-gradient(135deg, rgba(0,0,0,0.7), rgba(0,0,0,0.4)), url('/images/background.jpg') center/cover;
+    }
+
+    .artists-container {
+        min-height: 100vh;
+        width: 100%;
+        padding: 0;
+        margin: 0;
+        position: relative;
+        background-attachment: fixed;
+        background-repeat: no-repeat;
+        background-size: cover;
+        background: linear-gradient(135deg, rgba(0,0,0,0.7), rgba(0,0,0,0.4)), url('/images/background.jpg') center/cover;
+    }
+
+    .content-wrapper {
+        padding: 20px;
+        width: 100%;
+        height: 100%;
+    }
+
+    .form-section {
+        color: antiquewhite;
+        background: linear-gradient(135deg, black, darkgrey);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+
+        .form-section h3 {
+            color: #91C8E4;
+            margin-bottom: 20px;
+            font-weight: 600;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: white;
+            font-weight: 500;
+        }
+
+    .form-control {
+        width: 100%;
+        padding: 10px 15px;
+        border: 2px solid rgba(255,255,255,0.3);
+        border-radius: 8px;
+        background: rgba(255,255,255,0.8);
+        transition: all 0.3s ease;
+        color: #333;
+    }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #3498db;
+            background: rgba(255,255,255,0.95);
+            box-shadow: 0 0 0 3px rgba(52,152,219,0.1);
+        }
+
+    .btn-custom {
+        background: linear-gradient(135deg, #3498db, #2980b9);
+        color: white;
+        border: none;
+        padding: 12px 25px;
+        border-radius: 8px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(52,152,219,0.3);
+        margin-right: 10px;
+    }
+
+        .btn-custom:hover {
+            background: linear-gradient(135deg, #2980b9, #1abc9c);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52,152,219,0.4);
+        }
+
+        .btn-custom:disabled {
+            background: linear-gradient(135deg, #bdc3c7, #95a5a6);
+            cursor: not-allowed;
+            transform: none;
+            opacity: 0.6;
+        }
+
+    .page-title {
+        text-align: center;
+        color: #0F4D0F;
+        font-size: 2.5em;
+        margin-bottom: 20px;
+        text-shadow: 1px 1px 1px white;
+        position: relative;
+        z-index: 10;
+    }
+
+    .forms-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 30px;
+        margin-bottom: 30px;
+    }
+
+    .validation-message {
+        color: #e74c3c;
+        font-size: 0.875em;
+        margin-top: 5px;
+        display: block;
+        font-weight: 500;
+        background: rgba(231, 76, 60, 0.1);
+        padding: 5px 10px;
+        border-radius: 4px;
+        border-left: 3px solid #e74c3c;
+    }
+
+    .form-control:invalid {
+        border-color: #e74c3c;
+        box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);
+    }
+
+    .form-control:valid:not(:placeholder-shown) {
+        border-color: #27ae60;
+        box-shadow: 0 0 0 3px rgba(39, 174, 96, 0.1);
+    }
+
+    .required::after {
+        content: " *";
+        color: #e74c3c;
+        font-weight: bold;
+    }
+
+    .form-description {
+        color: #bdc3c7;
+        font-size: 0.9em;
+        margin-bottom: 15px;
+        font-style: italic;
+    }
+
+    .artist-selector {
+        margin-bottom: 20px;
+    }
+
+    .success-message {
+        color: #27ae60;
+        background: rgba(39, 174, 96, 0.1);
+        padding: 10px 15px;
+        border-radius: 8px;
+        border-left: 4px solid #27ae60;
+        margin-bottom: 20px;
+        display: none;
+    }
+
+        .success-message.show {
+            display: block;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+    @@keyframes fadeIn {
+        from
+
+    {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    }
+
+    @@media (max-width: 768px) {
+        .forms-container
+
+    {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .content-wrapper {
+        padding: 15px;
+    }
+
+    .page-title {
+        font-size: 2em;
+    }
+
+    }
+</style>
+
+<div class="artists-container">
+    <div class="content-wrapper">
+        <AuthorizeView Roles="Admin">
+            <Authorized Context="authContext">
+                <h1 class="page-title">Artists Management</h1>
+
+                <div class="forms-container">
+
+                    <div class="form-section">
+                        <h3>Add New Artist</h3>
+                        <p class="form-description">Fill out the form below to add a new artist to the system.</p>
+
+                        @if (showAddSuccess)
+                        {
+                            <div class="success-message show">
+                                <strong>Success!</strong> Artist has been added successfully.
+                            </div>
+                        }
+
+                        <EditForm Model="newArtist" OnValidSubmit="AddArtist" OnInvalidSubmit="OnAddInvalidSubmit" FormName="AddArtistForm" @ref="addArtistFormRef">
+                            <DataAnnotationsValidator />
+
+                            <div class="form-group">
+                                <label class="required">Artist Name</label>
+                                <InputText @bind-Value="newArtist.Name" class="form-control" placeholder="Enter artist name" />
+                                <ValidationMessage For="@(() => newArtist.Name)" class="validation-message" />
+                            </div>
+
+                            <div class="form-group">
+                                <label class="required">Artist Genre</label>
+                                <InputSelect @bind-Value="newArtist.Genre" class="form-control">
+                                    <option value="">--Select Genre--</option>
+                                    @foreach (Genres genre in Enum.GetValues(typeof(Genres)))
+                                    {
+                                        <option value="@genre">@genre</option>
+                                    }
+                                </InputSelect>
+                                <ValidationMessage For="@(() => newArtist.Genre)" class="validation-message" />
+                            </div>
+
+                            <div class="form-group">
+                                <label class="required">Artist Image URL</label>
+                                <InputText @bind-Value="newArtist.Image" class="form-control" placeholder="https://example.com/image.jpg" />
+                                <ValidationMessage For="@(() => newArtist.Image)" class="validation-message" />
+                            </div>
+
+                            <button type="submit" class="btn-custom">
+                                Add Artist
+                            </button>
+                        </EditForm>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>Update Artist</h3>
+                        <p class="form-description">Select an artist from the dropdown to update their information.</p>
+
+                        @if (showUpdateSuccess)
+                        {
+                            <div class="success-message show">
+                                <strong>Success!</strong> Artist has been updated successfully.
+                            </div>
+                        }
+
+                        <div class="artist-selector">
+                            <label>Select Artist to Update</label>
+                            <select class="form-control" @onchange="OnArtistSelected">
+                                <option value="">-- Select an Artist --</option>
+                                @foreach (var artist in artists)
+                                {
+                                    <option value="@artist.Id">@artist.Name</option>
+                                }
+                            </select>
+                        </div>
+
+                        <EditForm Model="updatedArtist" OnValidSubmit="UpdateArtist" OnInvalidSubmit="OnUpdateInvalidSubmit" FormName="UpdateArtistForm" @ref="updateArtistFormRef">
+                            <DataAnnotationsValidator />
+
+                            <div class="form-group">
+                                <label class="required">Artist Name</label>
+                                <InputText @bind-Value="updatedArtist.Name" class="form-control" disabled="@(selectedArtistId == 0)" />
+                                <ValidationMessage For="@(() => updatedArtist.Name)" class="validation-message" />
+                            </div>
+
+                            <div class="form-group">
+                                <label class="required">Artist Genre</label>
+                                <InputSelect @bind-Value="updatedArtist.Genre" class="form-control" disabled="@(selectedArtistId == 0)">
+                                    <option value="">--Select Genre--</option>
+                                    @foreach (Genres genre in Enum.GetValues(typeof(Genres)))
+                                    {
+                                        <option value="@genre">@genre</option>
+                                    }
+                                </InputSelect>
+                                <ValidationMessage For="@(() => updatedArtist.Genre)" class="validation-message" />
+                            </div>
+
+                            <div class="form-group">
+                                <label class="required">Artist Image URL</label>
+                                <InputText @bind-Value="updatedArtist.Image" class="form-control" disabled="@(selectedArtistId == 0)" />
+                                <ValidationMessage For="@(() => updatedArtist.Image)" class="validation-message" />
+                            </div>
+
+                            <button type="submit" class="btn-custom" disabled="@(selectedArtistId == 0)">
+                                Update Artist
+                            </button>
+                        </EditForm>
+                    </div>
+                </div>
+            </Authorized>
+            <NotAuthorized>
+                <div class="form-section">
+                    <h3>Access Denied</h3>
+                    <p>You need administrator privileges to access this page.</p>
+                </div>
+            </NotAuthorized>
+        </AuthorizeView>
+    </div>
+</div>
+
+@code {
+    private IList<ArtistGetDto> artists = new List<ArtistGetDto>();
+    private Dictionary<int, List<LineupGetDto>> artistFestivals = new();
+    private HashSet<int> loadingFestivals = new();
+    private bool showAddSuccess = false;
+    private bool showUpdateSuccess = false;
+
+    [SupplyParameterFromForm]
+    private ArtistCreateDto newArtist { get; set; } = new ArtistCreateDto();
+
+    [SupplyParameterFromForm]
+    private ArtistUpdateDto updatedArtist { get; set; } = new ArtistUpdateDto();
+
+    private int selectedArtistId = 0;
+    private EditForm? addArtistFormRef;
+    private EditForm? updateArtistFormRef;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        if (!authState.User.IsInRole("Admin"))
+        {
+            Navigation.NavigateTo("/access-denied");
+        }
+
+        try
+        {
+            artists = await ArtistService.GetAllArtistsAsync();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error initializing component: {ex.Message}");
+        }
+    }
+
+    private async Task AddArtist()
+    {
+        try
+        {
+            await ArtistService.AddArtistAsync(newArtist);
+            newArtist = new ArtistCreateDto();
+            artists = await ArtistService.GetAllArtistsAsync();
+
+            showAddSuccess = true;
+            StateHasChanged();
+
+            await Task.Delay(3000);
+            showAddSuccess = false;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error adding artist: {ex.Message}");
+        }
+    }
+
+    private async Task UpdateArtist()
+    {
+        try
+        {
+            if (selectedArtistId > 0)
+            {
+                await ArtistService.UpdateArtistAsync(updatedArtist, selectedArtistId);
+                updatedArtist = new ArtistUpdateDto();
+                selectedArtistId = 0;
+                artists = await ArtistService.GetAllArtistsAsync();
+
+                showUpdateSuccess = true;
+                StateHasChanged();
+
+                await Task.Delay(3000);
+                showUpdateSuccess = false;
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error updating artist: {ex.Message}");
+        }
+    }
+
+    private async Task OnArtistSelected(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int artistId) && artistId > 0)
+        {
+            selectedArtistId = artistId;
+            var selectedArtist = artists.FirstOrDefault(a => a.Id == artistId);
+
+            if (selectedArtist != null)
+            {
+                updatedArtist.Name = selectedArtist.Name;
+                updatedArtist.Genre = selectedArtist.Genre;
+                updatedArtist.Image = selectedArtist.Image;
+                StateHasChanged();
+            }
+        }
+        else
+        {
+            selectedArtistId = 0;
+            updatedArtist = new ArtistUpdateDto();
+            StateHasChanged();
+        }
+    }
+
+    private void OnAddInvalidSubmit()
+    {
+        addArtistFormRef?.EditContext?.Validate();
+        StateHasChanged();
+    }
+
+    private void OnUpdateInvalidSubmit()
+    {
+        updateArtistFormRef?.EditContext?.Validate();
+        StateHasChanged();
+    }
+}

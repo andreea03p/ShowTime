@@ -21,5 +21,5 @@ public class LineupCreateDto
 
     [Required(ErrorMessage = "Start date is required.")]
     [DataType(DataType.DateTime)]
-    public DateTime? StartTime { get; set; } = DateTime.Now.AddDays(1);
+    public DateTime? StartTime { get; set; } = DateTime.Now;
 }

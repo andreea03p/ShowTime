@@ -1,4 +1,5 @@
 ﻿@page "/lineup-management"
+@using Microsoft.AspNetCore.WebUtilities
 @using ShowTime.BusinessLogic.Abstraction
 @using ShowTime.BusinessLogic.Dtos
 @inject IFestivalService FestivalService
@@ -243,11 +244,51 @@
     }
 
     }
+
+    .autocomplete-container {
+        position: relative;
+    }
+
+    .autocomplete-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        max-height: 200px;
+        overflow-y: auto;
+        z-index: 1000;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .autocomplete-option {
+        padding: 8px 12px;
+        cursor: pointer;
+        color: #333;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+        .autocomplete-option:hover {
+            background-color: #f5f5f5;
+        }
+
+        .autocomplete-option:last-child {
+            border-bottom: none;
+        }
+
+    .festival-filter {
+        display: flex;
+        gap: 20px;
+        align-items: center;
+    }
+
 </style>
+
 
 <div class="lineup-container">
     <div class="content-wrapper">
-
         <AuthorizeView Roles="Admin">
             <Authorized Context="authContext">
                 <h1 class="page-title">Lineup Management</h1>
@@ -255,23 +296,63 @@
                 <div class="form-section">
                     <h3>Filter by Festival</h3>
                     <div class="festival-filter">
-                        <select class="form-control" style="max-width: 300px;" @onchange="OnFestivalFilterChanged">
-                            <option value="0">All Festivals</option>
-                            @foreach (var festival in festivals)
+                        <!-- Festival Autocomplete -->
+                        <div class="autocomplete-container" style="max-width: 300px; position: relative;">
+                            <input type="text"
+                                   class="form-control"
+                                   placeholder="Search festivals..."
+                                   @bind="festivalSearchText"
+                                   @oninput="OnFestivalSearchInput"
+                                   @onfocus="ShowFestivalDropdown"
+                                   @onblur="HideFestivalDropdown"
+                                   style="width: 100%;" />
+
+                            @if (showFestivalDropdown && filteredFestivals.Any())
                             {
-                                <option value="@festival.Id">@festival.Name</option>
+                                <div class="autocomplete-dropdown">
+                                    <div class="autocomplete-option" @onclick="() => SelectFestival(0)" @onmousedown="PreventBlur">
+                                        All Festivals
+                                    </div>
+                                    @foreach (var festival in filteredFestivals)
+                                    {
+                                        <div class="autocomplete-option"
+                                             @onclick="() => SelectFestival(festival.Id)"
+                                             @onmousedown="PreventBlur">
+                                            @festival.Name
+                                        </div>
+                                    }
+                                </div>
                             }
-                        </select>
-                        <select class="form-control" style="max-width: 300px;" @onchange="OnArtistFilterChanged">
-                            <option value="0">All Artists</option>
-                            @foreach (var artist in artists)
+                        </div>
+
+                        <!-- Artist Autocomplete -->
+                        <div class="autocomplete-container" style="max-width: 300px; position: relative;">
+                            <input type="text"
+                                   class="form-control"
+                                   placeholder="Search artists..."
+                                   @bind="artistSearchText"
+                                   @oninput="OnArtistSearchInput"
+                                   @onfocus="ShowArtistDropdown"
+                                   @onblur="HideArtistDropdown"
+                                   style="width: 100%;" />
+
+                            @if (showArtistDropdown && filteredArtists.Any())
                             {
-                                <option value="@artist.Id">@artist.Name</option>
+                                <div class="autocomplete-dropdown">
+                                    <div class="autocomplete-option" @onclick="() => SelectArtist(0)" @onmousedown="PreventBlur">
+                                        All Artists
+                                    </div>
+                                    @foreach (var artist in filteredArtists)
+                                    {
+                                        <div class="autocomplete-option"
+                                             @onclick="() => SelectArtist(artist.Id)"
+                                             @onmousedown="PreventBlur">
+                                            @artist.Name
+                                        </div>
+                                    }
+                                </div>
                             }
-                        </select>
-                        @* <button class="btn-custom" @onclick="LoadLineupData">
-                            <i class="bi bi-arrow-clockwise"></i> Refresh
-                        </button> *@
+                        </div>
                     </div>
                 </div>
 
@@ -279,10 +360,17 @@
                 {
                     <div class="form-section">
                         <h3>Edit Lineup Entry</h3>
+
+                        @if (!string.IsNullOrEmpty(timeConflictError))
+                        {
+                            <div class="error-message show">
+                                <strong>Time Conflict!</strong> @timeConflictError
+                            </div>
+                        }
+
                         <div class="edit-form">
                             <EditForm Model="editingLineup" OnValidSubmit="UpdateLineupEntry" FormName="EditLineupForm" @ref="editFormRef">
                                 <DataAnnotationsValidator />
-
                                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
                                     <div>
                                         <p><strong>Festival:</strong> @editingLineup.Festival.Name</p>
@@ -292,7 +380,6 @@
                                         <img src="@editingLineup.Artist.Image" alt="@editingLineup.Artist.Name" class="artist-image-small" />
                                     </div>
                                 </div>
-
                                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                                     <div class="form-group">
                                         <label class="required">Stage</label>
@@ -301,7 +388,6 @@
                                                    placeholder="e.g., Main Stage" />
                                         <ValidationMessage For="@(() => editDto.Stage)" class="validation-message" />
                                     </div>
-
                                     <div class="form-group">
                                         <label class="required">Start Time</label>
                                         <input type="datetime-local" @bind="editDto.StartTime"
@@ -309,7 +395,6 @@
                                         <ValidationMessage For="@(() => editDto.StartTime)" class="validation-message" />
                                     </div>
                                 </div>
-
                                 <div class="button-group">
                                     <button type="submit" class="btn-custom">
                                         <i class="bi bi-check"></i> Update Entry
@@ -321,6 +406,7 @@
                             </EditForm>
                         </div>
                     </div>
+                }
                 }
 
                 <div class="form-section">
@@ -414,9 +500,12 @@
     </div>
 </div>
 
+
 @code {
     private List<FestivalGetDto> festivals = new();
     private List<ArtistGetDto> artists = new();
+    private List<FestivalGetDto> filteredFestivals = new();
+    private List<ArtistGetDto> filteredArtists = new();
 
     private List<LineupGetDto> allLineup = new();
     private List<LineupGetDto> currentLineup = new();
@@ -424,12 +513,33 @@
     private LineupUpdateDto editDto = new();
     private EditForm? editFormRef;
     private int selectedFestivalId = 0;
-
     private int selectedArtistId = 0;
+
+    private string festivalSearchText = "";
+    private string artistSearchText = "";
+    private bool showFestivalDropdown = false;
+    private bool showArtistDropdown = false;
+
+    private string timeConflictError = "";
 
     protected override async Task OnInitializedAsync()
     {
         await LoadData();
+
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("festivalId", out var festivalIdValues))
+        {
+            if (int.TryParse(festivalIdValues.First(), out int festivalId))
+            {
+                selectedFestivalId = festivalId;
+                var selectedFestival = festivals.FirstOrDefault(f => f.Id == festivalId);
+                if (selectedFestival != null)
+                {
+                    festivalSearchText = selectedFestival.Name;
+                    ApplyFilter();
+                }
+            }
+        }
 
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         if (!authState.User.IsInRole("Admin"))
@@ -442,6 +552,10 @@
     {
         festivals = (await FestivalService.GetAllFestivalsAsync()).ToList();
         artists = (await ArtistService.GetAllArtistsAsync()).ToList();
+
+        filteredFestivals = festivals.ToList();
+        filteredArtists = artists.ToList();
+
         await LoadLineupData();
     }
 
@@ -458,35 +572,112 @@
         ApplyFilter();
     }
 
-    private async Task LoadArtistsData()
+    private void OnFestivalSearchInput(ChangeEventArgs e)
     {
-        allLineup.Clear();
+        festivalSearchText = e.Value?.ToString() ?? "";
+        FilterFestivals();
+        showFestivalDropdown = true;
+    }
 
-        foreach (var artist in artists)
+    private void FilterFestivals()
+    {
+        if (string.IsNullOrWhiteSpace(festivalSearchText))
         {
-            var artistLineup = await ArtistService.GetAllFestivalsForArtistAsync(artist.Id);
-            allLineup.AddRange(artistLineup);
+            filteredFestivals = festivals.ToList();
         }
+        else
+        {
+            filteredFestivals = festivals
+                .Where(f => f.Name.Contains(festivalSearchText, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+    }
 
+    private void ShowFestivalDropdown()
+    {
+        FilterFestivals();
+        showFestivalDropdown = true;
+    }
+
+    private void HideFestivalDropdown()
+    {
+        Task.Delay(150).ContinueWith(t =>
+        {
+            showFestivalDropdown = false;
+            InvokeAsync(StateHasChanged);
+        });
+    }
+
+    private void SelectFestival(int festivalId)
+    {
+        selectedFestivalId = festivalId;
+        if (festivalId == 0)
+        {
+            festivalSearchText = "";
+        }
+        else
+        {
+            var festival = festivals.FirstOrDefault(f => f.Id == festivalId);
+            festivalSearchText = festival?.Name ?? "";
+        }
+        showFestivalDropdown = false;
         ApplyFilter();
     }
 
-    private async Task OnFestivalFilterChanged(ChangeEventArgs e)
+    private void OnArtistSearchInput(ChangeEventArgs e)
     {
-        if (int.TryParse(e.Value?.ToString(), out int festivalId))
+        artistSearchText = e.Value?.ToString() ?? "";
+        FilterArtists();
+        showArtistDropdown = true;
+    }
+
+    private void FilterArtists()
+    {
+        if (string.IsNullOrWhiteSpace(artistSearchText))
         {
-            selectedFestivalId = festivalId;
-            ApplyFilter();
+            filteredArtists = artists.ToList();
+        }
+        else
+        {
+            filteredArtists = artists
+                .Where(a => a.Name.Contains(artistSearchText, StringComparison.OrdinalIgnoreCase))
+                .ToList();
         }
     }
 
-    private async Task OnArtistFilterChanged(ChangeEventArgs e)
+    private void ShowArtistDropdown()
     {
-        if (int.TryParse(e.Value?.ToString(), out int artistId))
+        FilterArtists();
+        showArtistDropdown = true;
+    }
+
+    private void HideArtistDropdown()
+    {
+        Task.Delay(150).ContinueWith(t =>
         {
-            selectedArtistId = artistId;
-            ApplyFilter();
+            showArtistDropdown = false;
+            InvokeAsync(StateHasChanged);
+        });
+    }
+
+    private void SelectArtist(int artistId)
+    {
+        selectedArtistId = artistId;
+        if (artistId == 0)
+        {
+            artistSearchText = "";
         }
+        else
+        {
+            var artist = artists.FirstOrDefault(a => a.Id == artistId);
+            artistSearchText = artist?.Name ?? "";
+        }
+        showArtistDropdown = false;
+        ApplyFilter();
+    }
+
+    private void PreventBlur(MouseEventArgs e)
+    {
     }
 
     private void ApplyFilter()
@@ -514,6 +705,7 @@
             Stage = lineup.Stage,
             StartTime = lineup.StartTime
         };
+        timeConflictError = ""; 
         StateHasChanged();
     }
 
@@ -521,6 +713,7 @@
     {
         editingLineup = null;
         editDto = new LineupUpdateDto();
+        timeConflictError = "";
         StateHasChanged();
     }
 
@@ -530,6 +723,15 @@
         {
             try
             {
+                timeConflictError = "";
+
+                var isValid = await ValidateTimeUpdate(editingLineup, editDto.StartTime);
+                if (!isValid)
+                {
+                    StateHasChanged();
+                    return;
+                }
+
                 await FestivalService.UpdateLineupEntryAsync(
                     editingLineup.FestivalId,
                     editingLineup.ArtistId,
@@ -545,13 +747,113 @@
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error updating lineup: {ex.Message}");
+                timeConflictError = ex.Message;
+                StateHasChanged();
             }
         }
     }
 
-    @inject IJSRuntime JSRuntime
+    private async Task<bool> ValidateTimeUpdate(LineupGetDto currentLineup, DateTime newStartTime)
+    {
+        var festival = festivals.FirstOrDefault(f => f.Id == currentLineup.FestivalId);
+        if (festival != null)
+        {
+            var festStart = festival.StartDate;
+            var festEnd = festival.EndDate.AddDays(1);
 
+            if (newStartTime < festStart || newStartTime > festEnd)
+            {
+                timeConflictError = $"Performance must be between {festStart:yyyy-MM-dd} and {festEnd:yyyy-MM-dd}.";
+                return false;
+            }
+        }
+
+        var isArtistAvailable = await CheckArtistAvailabilityForUpdate(
+            currentLineup.ArtistId, 
+            newStartTime, 
+            currentLineup.FestivalId, 
+            currentLineup.ArtistId);
+
+        if (!isArtistAvailable)
+        {
+            timeConflictError = $"This artist is already scheduled to perform at {newStartTime:yyyy-MM-dd HH:mm}. Please choose a different time.";
+            return false;
+        }
+
+        var isStageAvailable = await CheckStageAvailabilityForUpdate(
+            currentLineup.FestivalId, 
+            editDto.Stage, 
+            newStartTime, 
+            currentLineup.FestivalId, 
+            currentLineup.ArtistId);
+
+        if (!isStageAvailable)
+        {
+            timeConflictError = $"The {editDto.Stage} is already booked at {newStartTime:yyyy-MM-dd HH:mm}. Please choose a different time or stage.";
+            return false;
+        }
+
+        return true;
+    }
+
+    private async Task<bool> CheckArtistAvailabilityForUpdate(int artistId, DateTime startTime, int excludeFestivalId, int excludeArtistId)
+    {
+        try
+        {
+            var artistLineups = allLineup.Where(l => l.ArtistId == artistId).ToList();
+            
+            artistLineups = artistLineups.Where(l => !(l.FestivalId == excludeFestivalId && l.ArtistId == excludeArtistId)).ToList();
+            
+            var performanceDuration = TimeSpan.FromHours(2);
+            var endTime = startTime.Add(performanceDuration);
+            
+            var hasConflict = artistLineups.Any(lineup => 
+            {
+                var existingStart = lineup.StartTime;
+                var existingEnd = existingStart.Add(performanceDuration);
+                
+                return (startTime < existingEnd && endTime > existingStart);
+            });
+            
+            return !hasConflict;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error checking artist availability: {ex.Message}");
+            return false;
+        }
+    }
+
+    private async Task<bool> CheckStageAvailabilityForUpdate(int festivalId, string stage, DateTime startTime, int excludeFestivalId, int excludeArtistId)
+    {
+        try
+        {
+            var stageLineups = allLineup.Where(l => l.FestivalId == festivalId && 
+                                                   l.Stage.Equals(stage, StringComparison.OrdinalIgnoreCase)).ToList();
+            
+            stageLineups = stageLineups.Where(l => !(l.FestivalId == excludeFestivalId && l.ArtistId == excludeArtistId)).ToList();
+            
+            var performanceDuration = TimeSpan.FromHours(2);
+            var endTime = startTime.Add(performanceDuration);
+            
+            var hasConflict = stageLineups.Any(lineup => 
+            {
+                var existingStart = lineup.StartTime;
+                var existingEnd = existingStart.Add(performanceDuration);
+                
+                return (startTime < existingEnd && endTime > existingStart);
+            });
+            
+            return !hasConflict;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error checking stage availability: {ex.Message}");
+            return false; 
+        }
+    }
+
+    @inject IJSRuntime JSRuntime;
     private async Task ConfirmDelete(int festivalId, int artistId)
     {
         var lineup = allLineup.FirstOrDefault(l => l.FestivalId == festivalId && l.ArtistId == artistId);
@@ -579,5 +881,49 @@
         {
             Console.WriteLine($"Error deleting lineup entry: {ex.Message}");
         }
+    }
+    private async Task<bool> ValidateTimeUpdate(LineupGetDto currentLineup, DateTimeOffset newStartTime)
+    {
+        DateTime newStartTimeAsDateTime = newStartTime.DateTime;
+
+        var festival = festivals.FirstOrDefault(f => f.Id == currentLineup.FestivalId);
+        if (festival != null)
+        {
+            var festStart = festival.StartDate;
+            var festEnd = festival.EndDate.AddDays(1);
+
+            if (newStartTimeAsDateTime < festStart || newStartTimeAsDateTime > festEnd)
+            {
+                timeConflictError = $"Performance must be between {festStart:yyyy-MM-dd} and {festEnd:yyyy-MM-dd}.";
+                return false;
+            }
+        }
+
+        var isArtistAvailable = await CheckArtistAvailabilityForUpdate(
+            currentLineup.ArtistId, 
+            newStartTimeAsDateTime, 
+            currentLineup.FestivalId, 
+            currentLineup.ArtistId);
+
+        if (!isArtistAvailable)
+        {
+            timeConflictError = $"This artist is already scheduled to perform at {newStartTimeAsDateTime:yyyy-MM-dd HH:mm}. Please choose a different time.";
+            return false;
+        }
+
+        var isStageAvailable = await CheckStageAvailabilityForUpdate(
+            currentLineup.FestivalId, 
+            editDto.Stage, 
+            newStartTimeAsDateTime, 
+            currentLineup.FestivalId, 
+            currentLineup.ArtistId);
+
+        if (!isStageAvailable)
+        {
+            timeConflictError = $"The {editDto.Stage} is already booked at {newStartTimeAsDateTime:yyyy-MM-dd HH:mm}. Please choose a different time or stage.";
+            return false;
+        }
+
+        return true;
     }
 }

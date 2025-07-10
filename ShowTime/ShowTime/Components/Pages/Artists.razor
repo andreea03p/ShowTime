@@ -5,6 +5,8 @@
 @inject IArtistService ArtistService
 @inject IFestivalService FestivalService
 @rendermode InteractiveServer
+@inject IJSRuntime JSRuntime
+@inject NavigationManager NavigationManager
 
 <style>
     * {
@@ -28,7 +30,7 @@
         margin: 0;
         position: relative;
         background-attachment: fixed;
-        background-repeat: repeat;
+        background-repeat: no-repeat;
         background-size: cover;
         background: linear-gradient(135deg, rgba(0,0,0,0.7), rgba(0,0,0,0.4)), url('/images/background.jpg') center/cover;
     }
@@ -41,7 +43,7 @@
 
     .form-section {
         color: antiquewhite;
-        background: linear-gradient(135deg, black, white);
+        background: linear-gradient(135deg, rgba(0,0,0,0.8), rgba(255,255,255,0.1));
         backdrop-filter: blur(10px);
         border-radius: 15px;
         padding: 25px;
@@ -54,7 +56,7 @@
             color: #91C8E4;
             margin-bottom: 20px;
             font-weight: 600;
-            text-shadow: 1px 1px 2px rgba(255,255,255,0.5);
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
         }
 
     .form-group {
@@ -119,6 +121,16 @@
             background: linear-gradient(135deg, #708A58, #FFB823);
         }
 
+    .btn-manage {
+        background: linear-gradient(135deg, #8e44ad, #9b59b6);
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+
+        .btn-manage:hover {
+            background: linear-gradient(135deg, #9b59b6, orange);
+        }
+
     .artists-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
@@ -127,7 +139,7 @@
     }
 
     .artist-card {
-        background: linear-gradient(50deg, black, #06402B);
+        background: linear-gradient(135deg, rgba(0,0,0,0.8), rgba(6,64,43,0.8));
         backdrop-filter: blur(10px);
         border-radius: 20px;
         padding: 20px;
@@ -182,15 +194,15 @@
     }
 
     .artist-genre {
-        color: white;
+        color: #2c3e50;
         font-style: italic;
         font-size: 1.1em;
         padding: 5px 15px;
-        background: rgba(255,255,255,0.6);
+        background: rgba(255,255,255,0.8);
         border-radius: 20px;
         display: inline-block;
         margin-bottom: 15px;
-        justify-content: center;
+        font-weight: 500;
     }
 
     .artist-festivals {
@@ -249,10 +261,10 @@
         gap: 4px;
     }
 
-    .festival-stage i, .festival-time i {
-        color: #3498db;
-        width: 12px;
-    }
+        .festival-stage i, .festival-time i {
+            color: #3498db;
+            width: 12px;
+        }
 
     .no-festivals {
         color: #7f8c8d;
@@ -308,7 +320,7 @@
     }
 
     .validation-message {
-        color: red;
+        color: #e74c3c;
         font-size: 0.875em;
         margin-top: 5px;
         display: block;
@@ -316,39 +328,57 @@
     }
 
     .form-control:invalid {
-        border-color: red;
+        border-color: #e74c3c;
         box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);
     }
 
     .form-control:valid:not(:placeholder-shown) {
-        border-color: darkgreen;
+        border-color: #27ae60;
         box-shadow: 0 0 0 3px rgba(39, 174, 96, 0.1);
     }
 
     .required::after {
         content: " *";
-        color: red;
+        color: #e74c3c;
         font-weight: bold;
     }
 
     @@keyframes shimmer {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
+        0%
+
+    {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
+
     }
 
     @@media (max-width: 768px) {
-        .artists-grid {
-            grid-template-columns: 1fr;
-        }
-        
-        .artist-card {
-            min-height: auto;
-        }
-        
-        .festival-details {
-            flex-direction: column;
-        }
+        .artists-grid
+
+    {
+        grid-template-columns: 1fr;
+    }
+
+    .artist-card {
+        min-height: auto;
+    }
+
+    .festival-details {
+        flex-direction: column;
+    }
+
+    .content-wrapper {
+        padding: 20px 10px;
+    }
+
     }
 </style>
 
@@ -357,88 +387,9 @@
 
         <AuthorizeView Roles="Admin">
             <Authorized Context="authContext">
-                <h1 class="page-title">Artists Management</h1>
-                <div class="forms-container">
-                    <div class="form-section">
-                        <h3>Add New Artist</h3>
-                        <EditForm Model="newArtist" OnValidSubmit="AddArtist" FormName="AddArtistForm" @ref="addArtistFormRef">
-                            <DataAnnotationsValidator />
-
-                            <div class="form-group">
-                                <label class="required">Artist Name</label>
-                                <InputText @bind-Value="newArtist.Name" class="form-control" placeholder="Enter artist name" @oninput="OnArtistFieldChanged" />
-                                <ValidationMessage For="@(() => newArtist.Name)" class="validation-message" />
-                            </div>
-
-                            <div class="form-group">
-                                <label class="required">Artist Genre</label>
-                                <InputSelect @bind-Value="newArtist.Genre" class="form-control" @oninput="OnArtistFieldChanged">
-                                    <option value="">--Select Genre--</option>
-                                    @foreach (Genres genre in Enum.GetValues(typeof(Genres)))
-                                    {
-                                        <option value="@genre">@genre</option>
-                                    }
-                                </InputSelect>
-                                <ValidationMessage For="@(() => newArtist.Genre)" class="validation-message" />
-                            </div>
-
-                            <div class="form-group">
-                                <label class="required">Artist Image URL</label>
-                                <InputText @bind-Value="newArtist.Image" class="form-control" placeholder="https://example.com/image.jpg" @oninput="OnArtistFieldChanged" />
-                                <ValidationMessage For="@(() => newArtist.Image)" class="validation-message" />
-                            </div>
-
-                            <button type="submit" class="btn-custom" disabled="@(!IsAddArtistFormValid)">
-                                Add Artist
-                            </button>
-                        </EditForm>
-                    </div>
-
-                    <div class="form-section">
-                        <h3>Update Artist</h3>
-                        <p>Select artist to update from the DropDownList</p>
-
-                        <select class="form-control" @onchange="OnArtistSelected">
-                            <option value="">-- Select an Artist --</option>
-                            @foreach (var a in artists)
-                            {
-                                <option value="@a.Id">@a.Name</option>
-                            }
-                        </select>
-
-                        <EditForm Model="updatedArtist" OnValidSubmit="UpdateArtist" FormName="UpdateArtistForm" @ref="updateArtistFormRef">
-                            <DataAnnotationsValidator />
-
-                            <div class="form-group">
-                                <label class="required">Artist Name</label>
-                                <InputText @bind-Value="updatedArtist.Name" class="form-control" @oninput="OnUpdateArtistFieldChanged" />
-                                <ValidationMessage For="@(() => updatedArtist.Name)" class="validation-message" />
-                            </div>
-
-                            <div class="form-group">
-                                <label class="required">Artist Genre</label>
-                                <InputSelect @bind-Value="updatedArtist.Genre" class="form-control" @oninput="OnUpdateArtistFieldChanged">
-                                    <option value="">--Select Genre--</option>
-                                    @foreach (Genres genre in Enum.GetValues(typeof(Genres)))
-                                    {
-                                        <option value="@genre">@genre</option>
-                                    }
-                                </InputSelect>
-                                <ValidationMessage For="@(() => updatedArtist.Genre)" class="validation-message" />
-                            </div>
-
-                            <div class="form-group">
-                                <label class="required">Artist Image URL</label>
-                                <InputText @bind-Value="updatedArtist.Image" class="form-control" @oninput="OnUpdateArtistFieldChanged" />
-                                <ValidationMessage For="@(() => updatedArtist.Image)" class="validation-message" />
-                            </div>
-
-                            <button type="submit" class="btn-custom" disabled="@(selectedArtistId == 0 || !IsUpdateArtistFormValid)">
-                                Update Artist
-                            </button>
-                        </EditForm>
-                    </div>
-                </div>
+                <button type="button" class="btn-custom btn-manage" @onclick="ManageArtists">
+                    Manage Artists
+                </button>
             </Authorized>
         </AuthorizeView>
 
@@ -447,7 +398,7 @@
             @if (artists.Count == 0)
             {
                 <div class="no-artists">
-                    <p>No artists yet.</p>
+                    <p>No artists so far.</p>
                 </div>
             }
             else
@@ -469,7 +420,7 @@
                                         <span class="festival-count">@artistFestivals[artist.Id].Count</span>
                                     }
                                 </div>
-    
+
                                 @if (loadingFestivals?.Contains(artist.Id) == true)
                                 {
                                     <div class="loading-festivals">
@@ -550,7 +501,7 @@
         {
             artists = await ArtistService.GetAllArtistsAsync();
             StateHasChanged();
-        
+
             await LoadAllArtistFestivals();
         }
         catch (Exception ex)
@@ -565,7 +516,7 @@
         {
             loadingFestivals.Add(artist.Id);
             StateHasChanged();
-        
+
             try
             {
                 var festivals = await ArtistService.GetAllFestivalsForArtistAsync(artist.Id);
@@ -582,7 +533,6 @@
             }
         }
     }
-
 
     private async Task AddArtist()
     {
@@ -601,16 +551,17 @@
         StateHasChanged();
     }
 
-    @inject IJSRuntime JSRuntime  
+    private async Task PopupDeleteArtist(int id)
+    {
+        if (await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to delete this artist?"))
+        {
+            await DeleteArtist(id);
+        }
+    }
 
-    @code {  
-        private async Task PopupDeleteArtist(int id)  
-        {  
-            if (await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to delete this artist?"))  
-            {  
-                await DeleteArtist(id);  
-            }  
-        }  
+    private void ManageArtists()
+    {
+        NavigationManager.NavigateTo("/artists-management");
     }
 
     private async Task OnArtistSelected(ChangeEventArgs e)

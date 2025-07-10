@@ -15,7 +15,7 @@ public class FestivalUpdateDto
 
     [Required(ErrorMessage = "Start date is required.")]
     [DataType(DataType.Date)]
-    public DateTime StartDate { get; set; } = new DateTime(2025, 1, 1);
+    public DateTime StartDate { get; set; } = DateTime.Now;
 
     [Required(ErrorMessage = "End date is required.")]
     [DataType(DataType.Date)]

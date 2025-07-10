@@ -71,7 +71,6 @@ public class UserService : IUserService
             if (users.Any(u => u.Username.ToLower() == registerDto.Username.ToLower()))
                 return "This username is already taken.";
 
-            //var userRole = SetUserRole(registerDto.Email);
             var newUser = new User
             {
                 Username = registerDto.Username.Trim(),
@@ -87,14 +86,5 @@ public class UserService : IUserService
         {
             return $"Database Error: {ex.Message}";
         }
-    }
-
-    private Role SetUserRole(string email)
-    {
-        if (string.IsNullOrEmpty(email))
-        {
-            return Role.User;
-        }
-        return email.ToLower().EndsWith("@showtime.com") ? Role.Admin : Role.User;
     }
 }

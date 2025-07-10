@@ -14,8 +14,8 @@ public class FestivalGetDto
     public string Address { get; set; } = string.Empty;
     public double Latitude { get; set; }
     public double Longitude { get; set; }
-    public DateTime StartDate { get; set; }
-    public DateTime EndDate { get; set; }
+    public DateTime StartDate { get; set; } = DateTime.Now;
+    public DateTime EndDate { get; set; } = new DateTime(2028, 1, 1);
     public string SplashArt { get; set; } = string.Empty;
     public int Capacity { get; set; }
 }

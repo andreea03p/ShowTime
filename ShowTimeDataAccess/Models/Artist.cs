@@ -16,6 +16,6 @@ public class Artist
     public Genres Genre { get; set; } = Genres.Pop;
 
 
-    public ICollection<Lineup> Lineups { get; set; } = new List<Lineup>(); 
-    public ICollection<Festival> Festivals { get; set; } = new List<Festival>();
+    public virtual ICollection<Lineup> Lineups { get; set; } = new List<Lineup>(); 
+    public virtual ICollection<Festival> Festivals { get; set; } = new List<Festival>();
 }

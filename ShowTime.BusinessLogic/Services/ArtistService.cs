@@ -148,7 +148,7 @@ public class ArtistService : IArtistService
                         {
                             Id = festival.Id,
                             Name = festival.Name,
-                            Address = festival.Location?.Address ?? "Location TBD",
+                            Address = festival.Location?.Address ?? "Location TBA",
                             Latitude = festival.Location?.Latitude ?? 0,
                             Longitude = festival.Location?.Longitude ?? 0,
                             StartDate = festival.StartDate,

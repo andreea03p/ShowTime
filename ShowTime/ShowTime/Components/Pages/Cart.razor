@@ -1,0 +1,979 @@
+﻿@page "/cart"
+@using Microsoft.EntityFrameworkCore.Metadata.Internal
+@using ShowTime.BusinessLogic.Abstraction
+@using ShowTime.BusinessLogic.Dtos
+@using ShowTime.DataAccess.Models
+@using ShowTime.DataAccess.Models.Extras
+@using System.Security.Claims
+@inject IBookingService BookingService
+@inject ITicketService TicketService
+@inject IFestivalService FestivalService
+@inject IJSRuntime JSRuntime
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@rendermode InteractiveServer
+
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body, html {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        overflow-x: hidden;
+        background: linear-gradient(135deg, rgba(0,0,0,0.7), rgba(0,0,0,0.4)), url('/images/background.jpg') center/cover;
+    }
+
+    .cart-container {
+        min-height: 100vh;
+        width: 100%;
+        padding: 0;
+        margin: 0;
+        position: relative;
+        background-attachment: fixed;
+        background-repeat: repeat;
+        background-size: cover;
+        background: linear-gradient(135deg, rgba(0,0,0,0.7), rgba(0,0,0,0.4)), url('/images/background.jpg') center/cover;
+    }
+
+    .content-wrapper {
+        padding: 20px 20px 20px 20px;
+        width: 100%;
+        height: 100%;
+    }
+
+    .cart-section {
+        color: antiquewhite;
+        background: linear-gradient(135deg, black, white);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+
+        .cart-section h3 {
+            color: #91C8E4;
+            margin-bottom: 20px;
+            font-weight: 600;
+            text-shadow: 1px 1px 2px rgba(255,255,255,0.5);
+        }
+
+    .page-title {
+        text-align: center;
+        color: #0F4D0F;
+        font-size: 2.5em;
+        margin-top: 0;
+        margin-bottom: 40px;
+        text-shadow: 1px 1px 1px white;
+        position: relative;
+        z-index: 10;
+    }
+
+    .festivals-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 25px;
+        margin-top: 20px;
+    }
+
+    .festival-card {
+        background: linear-gradient(50deg, black, #06402B);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        border: 1px solid rgba(255,255,255,0.3);
+        transition: all 0.3s ease;
+        overflow: hidden;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        min-height: 200px;
+    }
+
+        .festival-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #3498db, #1abc9c, #3498db);
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite;
+        }
+
+    .festival-name {
+        font-size: 1.4em;
+        font-weight: 600;
+        color: white;
+        margin-bottom: 8px;
+        text-align: center;
+    }
+
+    .tickets-container {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .ticket-item {
+        background: rgba(255,255,255,0.1);
+        border-radius: 10px;
+        padding: 15px;
+        border: 1px solid rgba(255,255,255,0.2);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .ticket-info {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        flex: 1;
+        min-width: 200px;
+    }
+
+    .ticket-type {
+        font-weight: bold;
+        color: #91C8E4;
+        font-size: 1.1em;
+    }
+
+    .ticket-price {
+        color: #1abc9c;
+        font-weight: 600;
+        font-size: 1.2em;
+    }
+
+    .ticket-availability {
+        color: #ecf0f1;
+        font-size: 0.9em;
+    }
+
+    .ticket-controls {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        min-width: 200px;
+        justify-content: flex-end;
+    }
+
+    .quantity-control {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 5px;
+        padding: 5px;
+    }
+
+    .quantity-btn {
+        background: #3498db;
+        color: white;
+        border: none;
+        width: 30px;
+        height: 30px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: background 0.3s ease;
+    }
+
+        .quantity-btn:hover {
+            background: #2980b9;
+        }
+
+        .quantity-btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+        }
+
+    .quantity-display {
+        color: white;
+        font-weight: bold;
+        min-width: 30px;
+        text-align: center;
+    }
+
+    .btn-custom {
+        background: linear-gradient(135deg, #3498db, #2980b9);
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 8px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(52,152,219,0.3);
+    }
+
+        .btn-custom:hover {
+            background: linear-gradient(135deg, #2980b9, #1abc9c);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52,152,219,0.4);
+        }
+
+        .btn-custom:disabled {
+            background: linear-gradient(135deg, #bdc3c7, #95a5a6);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+    .btn-add {
+        background: linear-gradient(135deg, #27ae60, #2ecc71);
+    }
+
+        .btn-add:hover {
+            background: linear-gradient(135deg, #2ecc71, #1abc9c);
+        }
+
+    .btn-remove {
+        background: linear-gradient(135deg, #e74c3c, #c0392b);
+    }
+
+        .btn-remove:hover {
+            background: linear-gradient(135deg, #c0392b, #e74c3c);
+        }
+
+    .cart-summary {
+        background: linear-gradient(135deg, #34495e, #2c3e50);
+        border-radius: 15px;
+        padding: 20px;
+        margin-top: 20px;
+        color: white;
+    }
+
+    .cart-total {
+        font-size: 1.5em;
+        font-weight: bold;
+        color: #1abc9c;
+        text-align: center;
+        margin-bottom: 15px;
+    }
+
+    .btn-manage {
+        background: linear-gradient(135deg, #8e44ad, #9b59b6);
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+
+        .btn-manage:hover {
+            background: linear-gradient(135deg, #9b59b6, orange);
+        }
+
+    .cart-actions {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .btn-checkout {
+        background: linear-gradient(135deg, #27ae60, #2ecc71);
+        padding: 12px 30px;
+        font-size: 1.1em;
+    }
+
+    .btn-clear {
+        background: linear-gradient(135deg, #e74c3c, #c0392b);
+        padding: 12px 30px;
+        font-size: 1.1em;
+    }
+
+    .empty-cart {
+        text-align: center;
+        color: #ecf0f1;
+        font-size: 1.3em;
+        background: rgba(0,0,0,0.3);
+        padding: 40px;
+        border-radius: 15px;
+        backdrop-filter: blur(5px);
+    }
+
+    .loading {
+        text-align: center;
+        color: #91C8E4;
+        font-size: 1.2em;
+        padding: 20px;
+    }
+
+    .user-info {
+        background: rgba(255,255,255,0.1);
+        padding: 10px 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        color: #91C8E4;
+        font-size: 0.9em;
+    }
+
+    /* Bookings Section Styles */
+    .bookings-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+    }
+
+    .booking-card {
+        background: linear-gradient(50deg, #2c3e50, #34495e);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        border: 1px solid rgba(255,255,255,0.2);
+        transition: all 0.3s ease;
+        position: relative;
+    }
+
+        .booking-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #f39c12, #e67e22, #f39c12);
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite;
+        }
+
+        .booking-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(0,0,0,0.3);
+        }
+
+    .booking-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .booking-id {
+        font-size: 1.2em;
+        font-weight: bold;
+        color: #f39c12;
+    }
+
+    .status-badge {
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.8em;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+
+    .status-done {
+        background: rgba(39, 174, 96, 0.2);
+        color: #27ae60;
+        border: 1px solid #27ae60;
+    }
+
+    .status-pending {
+        background: rgba(243, 156, 18, 0.2);
+        color: #f39c12;
+        border: 1px solid #f39c12;
+    }
+
+    .booking-details {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        color: white;
+    }
+
+    .booking-detail-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 3px 0;
+    }
+
+    .booking-detail-label {
+        color: #bdc3c7;
+        font-size: 0.9em;
+    }
+
+    .booking-detail-value {
+        font-weight: 600;
+        color: white;
+    }
+
+    .booking-total {
+        margin-top: 15px;
+        padding-top: 10px;
+        border-top: 1px solid rgba(255,255,255,0.1);
+        text-align: center;
+    }
+
+    .booking-total-amount {
+        font-size: 1.3em;
+        font-weight: bold;
+        color: #1abc9c;
+    }
+
+    .no-bookings {
+        text-align: center;
+        color: #ecf0f1;
+        font-size: 1.2em;
+        background: rgba(0,0,0,0.3);
+        padding: 30px;
+        border-radius: 15px;
+        backdrop-filter: blur(5px);
+    }
+
+    @@keyframes shimmer {
+        0% {
+            background-position: -200% 0;
+        }
+
+        100% {
+            background-position: 200% 0;
+        }
+    }
+</style>
+
+<div class="cart-container">
+    <div class="content-wrapper">
+        <AuthorizeView Roles="Admin, User">
+            <Authorized Context="authContext">
+                <h1 class="page-title">Shopping Cart & My Bookings</h1>
+
+                @if (isLoading)
+                {
+                    <div class="loading">Loading festivals, tickets, and bookings...</div>
+                }
+                else
+                {
+                    <!-- Available Tickets Section -->
+                    <div class="cart-section">
+                        <h3>🎫 Available Tickets</h3>
+                        @if (festivalsWithTickets.Count == 0)
+                        {
+                            <div class="empty-cart">
+                                <p>No tickets available at the moment.</p>
+                                <p>Check again later for upcoming festivals!</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="festivals-grid">
+                                @foreach (var festival in festivalsWithTickets)
+                                {
+                                    <div class="festival-card">
+                                        <div class="festival-name">@festival.Festival.Name</div>
+                                        <div class="tickets-container">
+                                            @foreach (var ticket in festival.Tickets)
+                                            {
+                                                var cartItem = cartItems.FirstOrDefault(c => c.TicketId == ticket.Id);
+                                                var quantityInCart = cartItem?.Quantity ?? 0;
+                                                var availableQuantity = ticket.AvailableQuantity - quantityInCart;
+
+                                                <div class="ticket-item">
+                                                    <div class="ticket-info">
+                                                        <div class="ticket-type">@ticket.Type</div>
+                                                        <div class="ticket-price">$@ticket.Price.ToString("F2")</div>
+                                                        <div class="ticket-availability">
+                                                            Available: @Math.Max(0, availableQuantity)
+                                                            @if (quantityInCart > 0)
+                                                            {
+                                                                <span style="color: #f39c12;"> (In Cart: @quantityInCart)</span>
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                    <div class="ticket-controls">
+                                                        @if (quantityInCart > 0)
+                                                        {
+                                                            <div class="quantity-control">
+                                                                <button class="quantity-btn" @onclick="() => DecreaseQuantity(ticket.Id)">-</button>
+                                                                <span class="quantity-display">@quantityInCart</span>
+                                                                <button class="quantity-btn"
+                                                                        @onclick="() => IncreaseQuantity(ticket.Id)"
+                                                                        disabled="@(availableQuantity <= 0)">
+                                                                    +
+                                                                </button>
+                                                            </div>
+                                                            <button class="btn-custom btn-remove" @onclick="() => RemoveFromCart(ticket.Id)">
+                                                                Remove
+                                                            </button>
+                                                        }
+                                                        else
+                                                        {
+                                                            <button class="btn-custom btn-add"
+                                                                    @onclick="() => AddToCart(ticket.Id)"
+                                                                    disabled="@(ticket.AvailableQuantity <= 0 || !ticket.IsAvailable)">
+                                                                @if (ticket.AvailableQuantity <= 0 || !ticket.IsAvailable)
+                                                                {
+                                                                    <text>Sold Out</text>
+                                                                }
+                                                                else
+                                                                {
+                                                                    <text>Add to Cart</text>
+                                                                }
+                                                            </button>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+
+                            @if (cartItems.Any())
+                            {
+                                <div class="cart-summary">
+                                    <div class="cart-total">
+                                        Total: $@GetCartTotal().ToString("F2")
+                                    </div>
+                                    <div class="cart-actions">
+                                        <button class="btn-custom btn-checkout" @onclick="CheckoutCart" disabled="@isProcessingCheckout">
+                                            @if (isProcessingCheckout)
+                                            {
+                                                <text>Processing...</text>
+                                            }
+                                            else
+                                            {
+                                                <text>Complete Purchase</text>
+                                            }
+                                        </button>
+                                        <button class="btn-custom btn-clear" @onclick="ClearCart" disabled="@isProcessingCheckout">
+                                            Clear Cart
+                                        </button>
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+
+                    <!-- My Bookings Section -->
+                    <div class="cart-section">
+                        <h3>📋 My Bookings</h3>
+                        @if (userBookings.Count == 0)
+                        {
+                            <div class="no-bookings">
+                                <p>You haven't made any bookings yet.</p>
+                                <p>Add some tickets to your cart and complete a purchase!</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="bookings-grid">
+                                @foreach (var booking in userBookings)
+                                {
+                                    <div class="booking-card">
+                                        <div class="booking-header">
+                                            <div class="booking-id">#@booking.Id</div>
+                                            <span class="status-badge @GetStatusClass(booking.BookingStatus)">
+                                                @GetStatusIcon(booking.BookingStatus) @booking.BookingStatus
+                                            </span>
+                                        </div>
+                                        <div class="booking-details">
+                                            <div class="booking-detail-item">
+                                                <span class="booking-detail-label">Festival:</span>
+                                                <span class="booking-detail-value">@booking.FestivalName</span>
+                                            </div>
+                                            <div class="booking-detail-item">
+                                                <span class="booking-detail-label">Date:</span>
+                                                <span class="booking-detail-value">@booking.FestivalDate.ToString("MMM dd, yyyy")</span>
+                                            </div>
+                                            <div class="booking-detail-item">
+                                                <span class="booking-detail-label">Ticket Type:</span>
+                                                <span class="booking-detail-value">@booking.TicketType</span>
+                                            </div>
+                                            <div class="booking-detail-item">
+                                                <span class="booking-detail-label">Quantity:</span>
+                                                <span class="booking-detail-value">@booking.Quantity tickets</span>
+                                            </div>
+                                            <div class="booking-detail-item">
+                                                <span class="booking-detail-label">Unit Price:</span>
+                                                <span class="booking-detail-value">$@booking.TicketPrice.ToString("F2")</span>
+                                            </div>
+                                        </div>
+                                        <div class="booking-total">
+                                            <div class="booking-total-amount">
+                                                Total: $@booking.TotalAmount.ToString("F2")
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+            </Authorized>
+            <NotAuthorized>
+                <div class="empty-cart">
+                    <p>Please log in to access the shopping cart and view your bookings.</p>
+                </div>
+            </NotAuthorized>
+        </AuthorizeView>
+    </div>
+</div>
+
+@code {
+    private List<FestivalWithTickets> festivalsWithTickets = new();
+    private List<CartItem> cartItems = new();
+    private List<BookingGetDto> userBookings = new();
+    private bool isLoading = true;
+    private bool isProcessingCheckout = false;
+    private int currentUserId = 0;
+    private string currentUserName = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetCurrentUserInfo();
+
+        if (currentUserId > 0)
+        {
+            await LoadFestivalsAndTickets();
+            await LoadUserBookings();
+        }
+
+        isLoading = false;
+    }
+
+    private async Task GetCurrentUserInfo()
+    {
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            if (user.Identity?.IsAuthenticated == true)
+            {
+                // Try to get user ID from claims - adjust these claim types based on your authentication setup
+                var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier) ??
+                                 user.FindFirst("sub") ??
+                                 user.FindFirst("userId") ??
+                                 user.FindFirst("id");
+
+                var userNameClaim = user.FindFirst(ClaimTypes.Name) ??
+                                   user.FindFirst("name") ??
+                                   user.FindFirst(ClaimTypes.Email);
+
+                if (userIdClaim != null && int.TryParse(userIdClaim.Value, out var userId))
+                {
+                    currentUserId = userId;
+                    currentUserName = userNameClaim?.Value ?? "Unknown User";
+                }
+                else
+                {
+                    await JSRuntime.InvokeVoidAsync("alert", $"Unable to parse user ID: {userIdClaim?.Value}. Please contact support.");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error getting user info: {ex.Message}");
+        }
+    }
+
+    private async Task LoadFestivalsAndTickets()
+    {
+        try
+        {
+            var festivals = await FestivalService.GetAllFestivalsAsync();
+            var newFestivalsWithTickets = new List<FestivalWithTickets>();
+
+            foreach (var festival in festivals)
+            {
+                try
+                {
+                    var tickets = await TicketService.GetTicketByFestivalIdAsync(festival.Id);
+
+                    // Only add festivals that have tickets (regardless of availability)
+                    if (tickets.Any())
+                    {
+                        newFestivalsWithTickets.Add(new FestivalWithTickets
+                        {
+                            Festival = festival,
+                            Tickets = tickets.ToList()
+                        });
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error loading tickets for festival {festival.Id}: {ex.Message}");
+                    // Continue with other festivals instead of failing completely
+                }
+            }
+
+            // Only update if we have valid festivals with tickets
+            festivalsWithTickets = newFestivalsWithTickets;
+
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading festivals and tickets: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("alert", $"Error loading tickets: {ex.Message}");
+        }
+    }
+
+    private async Task LoadUserBookings()
+    {
+        try
+        {
+            if (currentUserId > 0)
+            {
+                var bookings = await BookingService.GetBookingsByUserIdAsync(currentUserId);
+                userBookings = bookings.ToList();
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading user bookings: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("alert", $"Error loading your bookings: {ex.Message}");
+        }
+    }
+
+    private void AddToCart(int ticketId)
+    {
+        var ticket = festivalsWithTickets
+            .SelectMany(f => f.Tickets)
+            .FirstOrDefault(t => t.Id == ticketId);
+
+        if (ticket != null && ticket.AvailableQuantity > 0)
+        {
+            var existingItem = cartItems.FirstOrDefault(c => c.TicketId == ticketId);
+            if (existingItem != null)
+            {
+                var currentCartQuantity = existingItem.Quantity;
+                if (currentCartQuantity < ticket.AvailableQuantity)
+                {
+                    existingItem.Quantity++;
+                }
+            }
+            else
+            {
+                cartItems.Add(new CartItem { TicketId = ticketId, Quantity = 1 });
+            }
+            StateHasChanged();
+        }
+    }
+
+    private void IncreaseQuantity(int ticketId)
+    {
+        var cartItem = cartItems.FirstOrDefault(c => c.TicketId == ticketId);
+        var ticket = festivalsWithTickets
+            .SelectMany(f => f.Tickets)
+            .FirstOrDefault(t => t.Id == ticketId);
+
+        if (cartItem != null && ticket != null)
+        {
+            var availableQuantity = ticket.AvailableQuantity - cartItem.Quantity;
+            if (availableQuantity > 0)
+            {
+                cartItem.Quantity++;
+                StateHasChanged();
+            }
+        }
+    }
+
+    private void DecreaseQuantity(int ticketId)
+    {
+        var cartItem = cartItems.FirstOrDefault(c => c.TicketId == ticketId);
+        if (cartItem != null)
+        {
+            cartItem.Quantity--;
+            if (cartItem.Quantity <= 0)
+            {
+                cartItems.Remove(cartItem);
+            }
+            StateHasChanged();
+        }
+    }
+
+    private void RemoveFromCart(int ticketId)
+    {
+        cartItems.RemoveAll(c => c.TicketId == ticketId);
+        StateHasChanged();
+    }
+
+    private void ClearCart()
+    {
+        cartItems.Clear();
+        StateHasChanged();
+    }
+
+    private decimal GetCartTotal()
+    {
+        decimal total = 0;
+        foreach (var cartItem in cartItems)
+        {
+            var ticket = festivalsWithTickets
+                .SelectMany(f => f.Tickets)
+                .FirstOrDefault(t => t.Id == cartItem.TicketId);
+            if (ticket != null)
+            {
+                total += ticket.Price * cartItem.Quantity;
+            }
+        }
+        return total;
+    }
+
+    private async Task CheckoutCart()
+    {
+        if (!cartItems.Any())
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Your cart is empty!");
+            return;
+        }
+
+        if (currentUserId <= 0)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Unable to identify user. Please log out and log in again.");
+            return;
+        }
+
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm",
+            $"Complete purchase for ${GetCartTotal():F2}?");
+
+        if (!confirmed) return;
+
+        isProcessingCheckout = true;
+        StateHasChanged();
+
+        var successfulBookings = new List<CartItem>();
+        var failedBookings = new List<string>();
+
+        try
+        {
+            // Create bookings one by one and track success/failure
+            foreach (var cartItem in cartItems.ToList()) // Use ToList() to avoid collection modification issues
+            {
+                try
+                {
+                    // Verify ticket availability before creating booking
+                    var currentTicket = festivalsWithTickets
+                        .SelectMany(f => f.Tickets)
+                        .FirstOrDefault(t => t.Id == cartItem.TicketId);
+
+                    if (currentTicket == null)
+                    {
+                        failedBookings.Add($"Ticket ID {cartItem.TicketId} no longer exists");
+                        continue;
+                    }
+
+                    // Check if enough tickets are still available
+                    var updatedTicket = await TicketService.GetTicketByIdAsync(cartItem.TicketId);
+                    if (updatedTicket.AvailableQuantity < cartItem.Quantity)
+                    {
+                        failedBookings.Add($"{currentTicket.Type}: Only {updatedTicket.AvailableQuantity} tickets available, but {cartItem.Quantity} requested");
+                        continue;
+                    }
+
+                    var bookingDto = new BookingCreateDto
+                    {
+                        TicketId = cartItem.TicketId,
+                        UserId = currentUserId,
+                        Quantity = cartItem.Quantity
+                    };
+
+                    await BookingService.CreateBookingAsync(bookingDto);
+                    successfulBookings.Add(cartItem);
+
+                    Console.WriteLine($"Successfully created booking for TicketId: {cartItem.TicketId}, Quantity: {cartItem.Quantity}");
+                }
+                catch (Exception ex)
+                {
+                    var ticket = festivalsWithTickets
+                        .SelectMany(f => f.Tickets)
+                        .FirstOrDefault(t => t.Id == cartItem.TicketId);
+                    var ticketName = ticket?.Type.ToString() ?? $"Ticket ID {cartItem.TicketId}";
+                    failedBookings.Add($"{ticketName}: {ex.Message}");
+                    Console.WriteLine($"Failed to create booking for TicketId {cartItem.TicketId}: {ex.Message}");
+                }
+            }
+
+            // Remove successfully booked items from cart
+            foreach (var successfulItem in successfulBookings)
+            {
+                cartItems.Remove(successfulItem);
+            }
+
+            // Refresh data to get updated availability and new bookings
+            await LoadFestivalsAndTickets();
+            await LoadUserBookings();
+
+            // Show results to user
+            if (successfulBookings.Any() && !failedBookings.Any())
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Purchase completed successfully!");
+            }
+            else if (successfulBookings.Any() && failedBookings.Any())
+            {
+                var message = $"Partial success: {successfulBookings.Count} items purchased.\n\nFailed items:\n" +
+                             string.Join("\n", failedBookings);
+                await JSRuntime.InvokeVoidAsync("alert", message);
+            }
+            else if (failedBookings.Any())
+            {
+                var message = "Purchase failed:\n" + string.Join("\n", failedBookings);
+                await JSRuntime.InvokeVoidAsync("alert", message);
+            }
+        }
+        catch (Exception ex)
+        {
+            var errorMessage = $"Unexpected error: {ex.Message}";
+            if (ex.InnerException != null)
+            {
+                errorMessage += $"\nInner: {ex.InnerException.Message}";
+            }
+            await JSRuntime.InvokeVoidAsync("alert", $"Error completing purchase: {errorMessage}");
+            Console.WriteLine($"Checkout failed: {errorMessage}");
+        }
+        finally
+        {
+            isProcessingCheckout = false;
+            StateHasChanged();
+        }
+    }
+
+    private string GetStatusClass(Status status)
+    {
+        return status switch
+        {
+            Status.Done => "status-done",
+            Status.Pending => "status-pending",
+            _ => "status-pending"
+        };
+    }
+
+    private string GetStatusIcon(Status status)
+    {
+        return status switch
+        {
+            Status.Done => "✅",
+            Status.Pending => "⏳",
+            _ => "⏳"
+        };
+    }
+
+    public class FestivalWithTickets
+    {
+        public FestivalGetDto Festival { get; set; } = new();
+        public List<TicketGetDto> Tickets { get; set; } = new();
+    }
+
+    public class CartItem
+    {
+        public int TicketId { get; set; }
+        public int Quantity { get; set; }
+    }
+}

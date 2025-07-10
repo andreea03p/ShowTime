@@ -75,7 +75,7 @@ window.addFestivalMarkers = (festivals) => {
             markersGroup.addLayer(marker);
             validMarkers.push(marker);
 
-            // Aauto open popup
+            // aauto open popup
             if (showFestivalId && festivalId.toString() === showFestivalId) {
                 marker.openPopup();
                 map.setView([lat, lng], 10);

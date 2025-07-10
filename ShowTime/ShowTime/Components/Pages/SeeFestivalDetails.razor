@@ -603,6 +603,6 @@
 
     private void GoToLineup()
     {
-        Navigation.NavigateTo("/lineup-management");
+        Navigation.NavigateTo($"/lineup-management?festivalId={festival.Id}");
     }
 }

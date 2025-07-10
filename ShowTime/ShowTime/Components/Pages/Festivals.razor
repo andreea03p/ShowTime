@@ -42,7 +42,7 @@
 
     .form-section {
         color: antiquewhite;
-        background: linear-gradient(135deg, black, white);
+        background: linear-gradient(135deg, rgba(0,0,0,0.8), rgba(255,255,255,0.1));
         backdrop-filter: blur(10px);
         border-radius: 15px;
         padding: 25px;
@@ -117,6 +117,16 @@
 
         .btn-delete:hover {
             background: linear-gradient(135deg, #708A58, #FFB823);
+        }
+
+    .btn-manage {
+        background: linear-gradient(135deg, #8e44ad, #9b59b6);
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+
+        .btn-manage:hover {
+            background: linear-gradient(135deg, #9b59b6, orange);
         }
 
     .btn-view {
@@ -275,228 +285,9 @@
 
         <AuthorizeView Roles="Admin">
             <Authorized Context="authContext">
-                <h1 class="page-title">Festivals Management</h1>
-                <div class="forms-container">
-
-                    <div class="form-section">
-                        <h3>Add New Festival</h3>
-                        <EditForm Model="newFestival" OnValidSubmit="AddFestival" FormName="AddFestivalForm" @ref="addFormRef">
-                            <DataAnnotationsValidator />
-
-                            <div class="form-group">
-                                <label class="required">Festival Name</label>
-                                <InputText @bind-Value="newFestival.Name" 
-                                          class="form-control" 
-                                          placeholder="Enter festival name"
-                                          @oninput="OnFieldChanged" />
-                                <ValidationMessage For="@(() => newFestival.Name)" class="validation-message" />
-                            </div>
-
-                            <div class="form-group">
-                                <label class="required">Festival Start Date</label>
-                                <InputDate @bind-Value="newFestival.StartDate" 
-                                          class="form-control"
-                                          @oninput="OnFieldChanged" />
-                                <ValidationMessage For="@(() => newFestival.StartDate)" class="validation-message" />
-                            </div>
-
-                            <div class="form-group">
-                                <label class="required">Festival End Date</label>
-                                <InputDate @bind-Value="newFestival.EndDate" 
-                                          class="form-control"
-                                          @oninput="OnFieldChanged" />
-                                <ValidationMessage For="@(() => newFestival.EndDate)" class="validation-message" />
-                            </div>
-
-                            <div class="form-group">
-                                <label class="required">Festival Address</label>
-                                <InputText @bind-Value="newFestival.Address" 
-                                          class="form-control" 
-                                          placeholder="Enter festival address"
-                                          @oninput="OnFieldChanged" />
-                                <ValidationMessage For="@(() => newFestival.Address)" class="validation-message" />
-                            </div>
-
-                            <div class="form-group">
-                                <label class="required">Festival Latitude</label>
-                                <InputNumber @bind-Value="newFestival.Latitude" 
-                                            class="form-control" 
-                                            placeholder="e.g., 45.7494"
-                                            @oninput="OnFieldChanged" />
-                                <ValidationMessage For="@(() => newFestival.Latitude)" class="validation-message" />
-                            </div>
-
-                            <div class="form-group">
-                                <label class="required">Festival Longitude</label>
-                                <InputNumber @bind-Value="newFestival.Longitude" 
-                                            class="form-control" 
-                                            placeholder="e.g., 21.2272"
-                                            @oninput="OnFieldChanged" />
-                                <ValidationMessage For="@(() => newFestival.Longitude)" class="validation-message" />
-                            </div>
-
-                            <div class="form-group">
-                                <label class="required">Festival SplashArt URL</label>
-                                <InputText @bind-Value="newFestival.SplashArt" 
-                                          class="form-control" 
-                                          placeholder="https://example.com/image.jpg"
-                                          @oninput="OnFieldChanged" />
-                                <ValidationMessage For="@(() => newFestival.SplashArt)" class="validation-message" />
-                            </div>
-
-                            <div class="form-group">
-                                <label class="required">Festival Capacity</label>
-                                <InputNumber @bind-Value="newFestival.Capacity" 
-                                            class="form-control" 
-                                            placeholder="e.g., 10000"
-                                            @oninput="OnFieldChanged" />
-                                <ValidationMessage For="@(() => newFestival.Capacity)" class="validation-message" />
-                            </div>
-
-                            <button type="submit" class="btn-custom" disabled="@(!IsAddFormValid)">
-                                Add Festival
-                            </button>
-                        </EditForm>
-                    </div>
-
-                    <div class="form-section">
-                        <h3>Update Festival</h3>
-                        <p>Select festival to update from the DropDownList</p>
-
-                        <select class="form-control" @onchange="OnFestivalSelected">
-                            <option value="">-- Select a Festival --</option>
-                            @foreach (var festival in festivals)
-                            {
-                                <option value="@festival.Id">@festival.Name</option>
-                            }
-                        </select>
-
-                        <EditForm Model="updatedFestival" OnValidSubmit="UpdateFestival" FormName="UpdateFestivalForm" @ref="updateFormRef">
-                            <DataAnnotationsValidator />
-
-                            <div class="form-group">
-                                <label class="required">Festival Name</label>
-                                <InputText @bind-Value="updatedFestival.Name" 
-                                          class="form-control"
-                                          @oninput="OnUpdateFieldChanged" />
-                                <ValidationMessage For="@(() => updatedFestival.Name)" class="validation-message" />
-                            </div>
-
-                            <div class="form-group">
-                                <label class="required">Festival Start Date</label>
-                                <InputDate @bind-Value="updatedFestival.StartDate" 
-                                          class="form-control"
-                                          @oninput="OnUpdateFieldChanged" />
-                                <ValidationMessage For="@(() => updatedFestival.StartDate)" class="validation-message" />
-                            </div>
-
-                            <div class="form-group">
-                                <label class="required">Festival End Date</label>
-                                <InputDate @bind-Value="updatedFestival.EndDate" 
-                                          class="form-control"
-                                          @oninput="OnUpdateFieldChanged" />
-                                <ValidationMessage For="@(() => updatedFestival.EndDate)" class="validation-message" />
-                            </div>
-
-                            <div class="form-group">
-                                <label class="required">Festival Address</label>
-                                <InputText @bind-Value="updatedFestival.Address" 
-                                          class="form-control"
-                                          @oninput="OnUpdateFieldChanged" />
-                                <ValidationMessage For="@(() => updatedFestival.Address)" class="validation-message" />
-                            </div>
-
-                            <div class="form-group">
-                                <label class="required">Festival Latitude</label>
-                                <InputNumber @bind-Value="updatedFestival.Latitude" 
-                                            class="form-control"
-                                            @oninput="OnUpdateFieldChanged" />
-                                <ValidationMessage For="@(() => updatedFestival.Latitude)" class="validation-message" />
-                            </div>
-
-                            <div class="form-group">
-                                <label class="required">Festival Longitude</label>
-                                <InputNumber @bind-Value="updatedFestival.Longitude" 
-                                            class="form-control"
-                                            @oninput="OnUpdateFieldChanged" />
-                                <ValidationMessage For="@(() => updatedFestival.Longitude)" class="validation-message" />
-                            </div>
-
-                            <div class="form-group">
-                                <label class="required">Festival SplashArt URL</label>
-                                <InputText @bind-Value="updatedFestival.SplashArt" 
-                                          class="form-control"
-                                          @oninput="OnUpdateFieldChanged" />
-                                <ValidationMessage For="@(() => updatedFestival.SplashArt)" class="validation-message" />
-                            </div>
-
-                            <div class="form-group">
-                                <label class="required">Festival Capacity</label>
-                                <InputNumber @bind-Value="updatedFestival.Capacity" 
-                                            class="form-control"
-                                            @oninput="OnUpdateFieldChanged" />
-                                <ValidationMessage For="@(() => updatedFestival.Capacity)" class="validation-message" />
-                            </div>
-
-                            <button type="submit" class="btn-custom" disabled="@(selectedFestivalId == 0 || !IsUpdateFormValid)">
-                                Update Festival
-                            </button>
-                        </EditForm>
-                    </div>
-
-                    <div class="form-section lineup-section">
-                        <h3>Add Artist to Festival Lineup</h3>
-                        <EditForm Model="newLineup" OnValidSubmit="AddArtistToFestivalLineup" FormName="AddLineupForm" @ref="lineupFormRef">
-                            <DataAnnotationsValidator />
-
-                            <div class="form-group">
-                                <label class="required">Select Festival</label>
-                                <InputSelect @bind-Value="newLineup.FestivalId" class="form-control" @oninput="OnLineupFieldChanged">
-                                    <option value="0">-- Select Festival --</option>
-                                    @foreach (var festival in festivals)
-                                    {
-                                        <option value="@festival.Id">@festival.Name</option>
-                                    }
-                                </InputSelect>
-                                <ValidationMessage For="@(() => newLineup.FestivalId)" class="validation-message" />
-                            </div>
-
-                            <div class="form-group">
-                                <label class="required">Select Artist</label>
-                                <InputSelect @bind-Value="newLineup.ArtistId" class="form-control" @oninput="OnLineupFieldChanged">
-                                    <option value="0">-- Select Artist --</option>
-                                    @foreach (var artist in artists)
-                                    {
-                                        <option value="@artist.Id">@artist.Name</option>
-                                    }
-                                </InputSelect>
-                                <ValidationMessage For="@(() => newLineup.ArtistId)" class="validation-message" />
-                            </div>
-
-                            <div class="form-group">
-                                <label class="required">Stage</label>
-                                <InputText @bind-Value="newLineup.Stage" 
-                                          class="form-control" 
-                                          placeholder="e.g., Main Stage, Second Stage"
-                                          @oninput="OnLineupFieldChanged" />
-                                <ValidationMessage For="@(() => newLineup.Stage)" class="validation-message" />
-                            </div>
-                            <div class="form-group">
-                                <label class="required">Start Date</label>
-                                <InputDate Type="InputDateType.DateTimeLocal"
-                                           @bind-Value="newLineup.StartTime" 
-                                           @bind-Value:format="dd/MM/yyyy hh:mm:ss"
-                                           class="form-control"
-                                           @oninput="OnLineupFieldChanged" />
-                                <ValidationMessage For="@(() => updatedFestival.EndDate)" class="validation-message" />
-                            </div>
-
-                            <button type="submit" class="btn-custom" disabled="@(!IsLineupFormValid)">
-                                Add to Lineup
-                            </button>
-                        </EditForm>
-                    </div>
-                </div>
+                <button type="button" class="btn-custom btn-manage" @onclick="ManageFestivals">
+                    Manage Festivals
+                </button>
             </Authorized>
         </AuthorizeView>
 
@@ -505,7 +296,7 @@
             @if (festivals.Count == 0)
             {
                 <div class="no-festivals">
-                    <p>No festivals yet.</p>
+                    <p>No festivals so far.</p>
                 </div>
             }
             else
@@ -524,19 +315,19 @@
                                 <i class="bi bi-geo"></i>
                                 @fest.Address
                             </div>
-                            <div class="fest-price">
+                            @* <div class="fest-price">
                                 <i class="bi bi-currency-exchange"></i>
                                 from $
-                            </div>
+                            </div> *@
 
                             <div class="button-group">
                                 <button type="button" class="btn-custom btn-view" @onclick="() => ViewFestivalDetails(fest.Id)">
                                      <i class="bi bi-eye"></i>
                                      View Details
                                 </button>
-                                <AuthorizeView Roles="Admin, User">
+                                <AuthorizeView Roles="Admin">
                                     <Authorized>
-                                        <button type="button" class="btn-custom btn-delete" onclick="window.location.href='tickets'">
+                                        <button type="button" class="btn-custom btn-delete" onclick="window.location.href='tickets-management'">
                                             <i class="bi bi-ticket-detailed-fill"></i>
                                             Tickets
                                         </button>
@@ -667,6 +458,11 @@
         }
     }
 
+    
+    private void ManageFestivals()
+    {
+        Navigation.NavigateTo("/festivals-management");
+    }
 
     private async Task OnFestivalSelected(ChangeEventArgs e)
     {

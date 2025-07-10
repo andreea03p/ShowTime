@@ -1,0 +1,780 @@
+﻿@page "/bookings"
+@using ShowTime.BusinessLogic.Abstraction
+@using ShowTime.BusinessLogic.Dtos
+@using ShowTime.DataAccess.Models
+@using ShowTime.DataAccess.Models.Extras
+@inject IBookingService BookingService
+@inject ITicketService TicketService
+@inject IFestivalService FestivalService
+@inject IJSRuntime JSRuntime
+@rendermode InteractiveServer
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager Navigation
+
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body, html {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        overflow-x: hidden;
+        background: linear-gradient(135deg, rgba(0,0,0,0.7), rgba(0,0,0,0.4)), url('/images/background.jpg') center/cover;
+    }
+
+    .admin-bookings-container {
+        min-height: 100vh;
+        width: 100%;
+        padding: 0;
+        margin: 0;
+        position: relative;
+        background-attachment: fixed;
+        background-repeat: repeat;
+        background-size: cover;
+        background: linear-gradient(135deg, rgba(0,0,0,0.7), rgba(0,0,0,0.4)), url('/images/background.jpg') center/cover;
+    }
+
+    .content-wrapper {
+        padding: 20px;
+        width: 100%;
+        height: 100%;
+    }
+
+    .page-title {
+        text-align: center;
+        color: #0F4D0F;
+        font-size: 2.5em;
+        margin-top: 0;
+        margin-bottom: 40px;
+        text-shadow: 1px 1px 1px white;
+        position: relative;
+        z-index: 10;
+    }
+
+    .admin-section {
+        color: antiquewhite;
+        background: linear-gradient(135deg, black, white);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+
+        .admin-section h3 {
+            color: #91C8E4;
+            margin-bottom: 20px;
+            font-weight: 600;
+            text-shadow: 1px 1px 2px rgba(255,255,255,0.5);
+        }
+
+    /* Statistics Cards */
+    .statistics-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .stat-card {
+        background: linear-gradient(135deg, #34495e, #2c3e50);
+        border-radius: 15px;
+        padding: 20px;
+        text-align: center;
+        color: white;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        border: 1px solid rgba(255,255,255,0.1);
+        transition: transform 0.3s ease;
+    }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+    .stat-number {
+        font-size: 2.5em;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+
+    .stat-label {
+        font-size: 1em;
+        opacity: 0.8;
+    }
+
+    .stat-done {
+        color: #27ae60;
+    }
+
+    .stat-pending {
+        color: #f39c12;
+    }
+
+    .stat-cancelled {
+        color: #e74c3c;
+    }
+
+    .stat-revenue {
+        color: #9b59b6;
+    }
+
+    .stat-total {
+        color: #3498db;
+    }
+
+    /* Controls */
+    .controls-section {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 25px;
+        padding: 20px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 10px;
+        backdrop-filter: blur(5px);
+    }
+
+    .control-group {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .form-control {
+        background: rgba(255,255,255,0.1);
+        border: 1px solid rgba(255,255,255,0.3);
+        border-radius: 8px;
+        padding: 8px 12px;
+        color: white;
+        font-size: 14px;
+        min-width: 150px;
+    }
+
+        .form-control::placeholder {
+            color: rgba(255,255,255,0.6);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52,152,219,0.3);
+        }
+
+    .form-control option {
+        background: #2c3e50;
+        color: white;
+    }
+
+    /* Buttons */
+    .btn-custom {
+        background: linear-gradient(135deg, #3498db, #2980b9);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(52,152,219,0.3);
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+    }
+
+        .btn-custom:hover {
+            background: linear-gradient(135deg, #2980b9, #1abc9c);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52,152,219,0.4);
+        }
+
+    .btn-success {
+        background: linear-gradient(135deg, #27ae60, #2ecc71);
+    }
+
+        .btn-success:hover {
+            background: linear-gradient(135deg, #2ecc71, #1abc9c);
+        }
+
+    .btn-danger {
+        background: linear-gradient(135deg, #e74c3c, #c0392b);
+    }
+
+        .btn-danger:hover {
+            background: linear-gradient(135deg, #c0392b, #e74c3c);
+        }
+
+    .btn-warning {
+        background: linear-gradient(135deg, #f39c12, #e67e22);
+    }
+
+        .btn-warning:hover {
+            background: linear-gradient(135deg, #e67e22, #d35400);
+        }
+
+    .btn-sm {
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+
+    /* Table */
+    .bookings-table {
+        width: 100%;
+        background: rgba(255,255,255,0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    }
+
+        .bookings-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .bookings-table th {
+            background: rgba(0,0,0,0.3);
+            color: #91C8E4;
+            padding: 15px 10px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .bookings-table td {
+            padding: 12px 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            color: white;
+        }
+
+        .bookings-table tr:hover {
+            background: rgba(255,255,255,0.05);
+        }
+
+    .status-badge {
+        padding: 4px 8px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 500;
+        text-transform: uppercase;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .status-done {
+        background: rgba(39, 174, 96, 0.2);
+        color: #27ae60;
+        border: 1px solid #27ae60;
+    }
+
+    .status-pending {
+        background: rgba(243, 156, 18, 0.2);
+        color: #f39c12;
+        border: 1px solid #f39c12;
+    }
+
+    .status-cancelled {
+        background: rgba(231, 76, 60, 0.2);
+        color: #e74c3c;
+        border: 1px solid #e74c3c;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 5px;
+        flex-wrap: wrap;
+    }
+
+    /* Modal */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        backdrop-filter: blur(5px);
+    }
+
+    .modal-content {
+        background: linear-gradient(135deg, #2c3e50, #34495e);
+        border-radius: 15px;
+        padding: 30px;
+        max-width: 600px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+        color: white;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid rgba(255,255,255,0.2);
+    }
+
+    .modal-title {
+        color: #91C8E4;
+        font-size: 1.5em;
+        font-weight: 600;
+    }
+
+    .close-btn {
+        background: none;
+        border: none;
+        color: #bdc3c7;
+        font-size: 24px;
+        cursor: pointer;
+        padding: 0;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: all 0.3s ease;
+    }
+
+        .close-btn:hover {
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+
+    .detail-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+
+    .detail-item {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .detail-label {
+        font-size: 0.9em;
+        color: #bdc3c7;
+        font-weight: 500;
+    }
+
+    .detail-value {
+        font-size: 1.1em;
+        color: white;
+        font-weight: 600;
+    }
+
+    .loading, .empty-message {
+        text-align: center;
+        color: #91C8E4;
+        font-size: 1.2em;
+        padding: 40px;
+        background: rgba(0,0,0,0.3);
+        border-radius: 15px;
+        backdrop-filter: blur(5px);
+    }
+
+    .filter-summary {
+        background: rgba(255,255,255,0.1);
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 20px;
+        color: white;
+        text-align: center;
+        backdrop-filter: blur(5px);
+    }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .controls-section {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .control-group {
+            justify-content: center;
+        }
+
+        .bookings-table {
+            font-size: 14px;
+        }
+
+            .bookings-table th,
+            .bookings-table td {
+                padding: 8px 5px;
+            }
+
+        .action-buttons {
+            flex-direction: column;
+        }
+    }
+</style>
+
+<div class="admin-bookings-container">
+    <div class="content-wrapper">
+        <AuthorizeView Roles="Admin">
+            <Authorized Context="authContext">
+                <h1 class="page-title">Bookings Management</h1>
+
+                @if (isLoading)
+                {
+                    <div class="loading">Loading bookings data...</div>
+                }
+                else
+                {
+                    <!-- Statistics Section -->
+                    <div class="admin-section">
+                        <h3>📊 Booking Statistics</h3>
+                        <div class="statistics-grid">
+                            <div class="stat-card">
+                                <div class="stat-number stat-total">@statistics.TotalBookings</div>
+                                <div class="stat-label">Total Bookings</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-number stat-revenue">$@statistics.TotalRevenue.ToString("N0")</div>
+                                <div class="stat-label">Total Revenue</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-number stat-done">@statistics.ConfirmedBookings</div>
+                                <div class="stat-label">Confirmed</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-number stat-pending">@statistics.PendingBookings</div>
+                                <div class="stat-label">Pending</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Filter Summary -->
+                    <div class="filter-summary">
+                        <h4>📋 Filter Summary</h4>
+                        <p>Showing @filteredBookings.Count bookings from @(string.IsNullOrEmpty(festivalFilter) ? "all festivals" : festivals.FirstOrDefault(f => f.Id.ToString() == festivalFilter)?.Name)</p>
+                    </div>
+
+                    <div class="admin-section">
+                        <div class="controls-section">
+                            <div class="control-group">
+                                <label style="color: white; font-weight: 500;">Filter by Festival:</label>
+                                <select @bind="festivalFilter" class="form-control">
+                                    <option value="">All Festivals</option>
+                                    @foreach (var festival in festivals)
+                                    {
+                                        <option value="@festival.Id">@festival.Name</option>
+                                    }
+                                </select>
+
+                                <label style="color: white; font-weight: 500;">Sort by:</label>
+                                <select @bind="sortBy" class="form-control">
+                                    <option value="newest">Newest First</option>
+                                    <option value="oldest">Oldest First</option>
+                                    <option value="customer">Customer Name</option>
+                                    <option value="festival">Festival Name</option>
+                                    <option value="amount">Amount (High to Low)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bookings Table -->
+                    <div class="admin-section">
+                        <h3>📋 All Bookings (@filteredBookings.Count)</h3>
+
+                        @if (filteredBookings.Any())
+                        {
+                            <div class="bookings-table">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Customer</th>
+                                            <th>Festival</th>
+                                            <th>Ticket Type</th>
+                                            <th>Qty</th>
+                                            <th>Total</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var booking in filteredBookings)
+                                        {
+                                            <tr>
+                                                <td><strong>#@booking.Id</strong></td>
+                                                <td>
+                                                    <div>@booking.UserName</div>
+                                                    <div style="font-size: 0.8em; opacity: 0.7;">@booking.UserEmail</div>
+                                                </td>
+                                                <td>
+                                                    <div>@booking.FestivalName</div>
+                                                    <div style="font-size: 0.8em; opacity: 0.7;">@booking.FestivalDate.ToString("MMM dd, yyyy")</div>
+                                                </td>
+                                                <td>@booking.TicketType</td>
+                                                <td>@booking.Quantity</td>
+                                                <td><strong>$@booking.TotalAmount.ToString("F2")</strong></td>
+                                                <td>
+                                                    <span class="status-badge @GetStatusClass(booking.BookingStatus)">
+                                                        @GetStatusIcon(booking.BookingStatus) @booking.BookingStatus
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <div class="action-buttons">
+                                                        <button class="btn-custom btn-sm" @onclick="() => ViewBookingDetails(booking)">
+                                                            👁️ Details
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="empty-message">
+                                No bookings found matching your criteria.
+                            </div>
+                        }
+                    </div>
+                }
+
+                <!-- Booking Details Modal -->
+                @if (showDetailsModal && selectedBooking != null)
+                {
+                    <div class="modal-overlay" @onclick="CloseDetailsModal">
+                        <div class="modal-content" @onclick:stopPropagation="true">
+                            <div class="modal-header">
+                                <h3 class="modal-title">Booking Details #@selectedBooking.Id</h3>
+                                <button class="close-btn" @onclick="CloseDetailsModal">×</button>
+                            </div>
+
+                            <div class="detail-grid">
+                                <div class="detail-item">
+                                    <div class="detail-label">Booking ID</div>
+                                    <div class="detail-value">#@selectedBooking.Id</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Status</div>
+                                    <div class="detail-value">
+                                        <span class="status-badge @GetStatusClass(selectedBooking.BookingStatus)">
+                                            @GetStatusIcon(selectedBooking.BookingStatus) @selectedBooking.BookingStatus
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Customer Name</div>
+                                    <div class="detail-value">@selectedBooking.UserName</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Customer Email</div>
+                                    <div class="detail-value">@selectedBooking.UserEmail</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Festival</div>
+                                    <div class="detail-value">@selectedBooking.FestivalName</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Festival Date</div>
+                                    <div class="detail-value">@selectedBooking.FestivalDate.ToString("MMMM dd, yyyy")</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Ticket Type</div>
+                                    <div class="detail-value">@selectedBooking.TicketType</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Unit Price</div>
+                                    <div class="detail-value">$@selectedBooking.TicketPrice.ToString("F2")</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Quantity</div>
+                                    <div class="detail-value">@selectedBooking.Quantity tickets</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Total Amount</div>
+                                    <div class="detail-value" style="color: #1abc9c; font-size: 1.3em;">
+                                        $@selectedBooking.TotalAmount.ToString("F2")
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                }
+            </Authorized>
+        </AuthorizeView>
+    </div>
+</div>
+
+@code {
+    private List<BookingGetDto> allBookings = new();
+    private List<BookingGetDto> filteredBookings = new();
+    private List<FestivalGetDto> festivals = new();
+    private BookingStatistics statistics = new();
+    private bool isLoading = true;
+    private bool showDetailsModal = false;
+    private BookingGetDto? selectedBooking = null;
+
+    private string _festivalFilter = string.Empty;
+    private string festivalFilter
+    {
+        get => _festivalFilter;
+        set
+        {
+            _festivalFilter = value;
+            FilterBookings();
+        }
+    }
+
+    private string _sortBy = "newest";
+    private string sortBy
+    {
+        get => _sortBy;
+        set
+        {
+            _sortBy = value;
+            SortBookings();
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        if (!authState.User.IsInRole("Admin"))
+        {
+            Navigation.NavigateTo("/access-denied");
+            return;
+        }
+
+        await LoadData();
+        isLoading = false;
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            await LoadBookings();
+            await LoadFestivals();
+            CalculateStatistics();
+            FilterBookings();
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error loading data: {ex.Message}");
+        }
+    }
+
+    private async Task LoadBookings()
+    {
+        var bookings = await BookingService.GetAllBookingsAsync();
+        allBookings = bookings.ToList();
+    }
+
+    private async Task LoadFestivals()
+    {
+        var festivalsList = await FestivalService.GetAllFestivalsAsync();
+        festivals = festivalsList.ToList();
+    }
+
+    private void CalculateStatistics()
+    {
+        statistics.TotalBookings = allBookings.Count;
+        statistics.TotalRevenue = allBookings
+            .Where(b => b.BookingStatus == Status.Done)
+            .Sum(b => b.TotalAmount);
+        statistics.ConfirmedBookings = allBookings.Count(b => b.BookingStatus == Status.Done);
+        statistics.PendingBookings = allBookings.Count(b => b.BookingStatus == Status.Pending);
+    }
+
+    private void FilterBookings()
+    {
+        filteredBookings = allBookings.AsEnumerable().ToList();
+
+        if (!string.IsNullOrEmpty(festivalFilter) && int.TryParse(festivalFilter, out var festivalId))
+        {
+            var festival = festivals.FirstOrDefault(f => f.Id == festivalId);
+            if (festival != null)
+            {
+                filteredBookings = filteredBookings.Where(b => b.FestivalName == festival.Name).ToList();
+            }
+        }
+
+        SortBookings();
+    }
+
+    private void SortBookings()
+    {
+        filteredBookings = sortBy switch
+        {
+            "newest" => filteredBookings.OrderByDescending(b => b.Id).ToList(),
+            "oldest" => filteredBookings.OrderBy(b => b.Id).ToList(),
+            "customer" => filteredBookings.OrderBy(b => b.UserName).ToList(),
+            "festival" => filteredBookings.OrderBy(b => b.FestivalName).ToList(),
+            "amount" => filteredBookings.OrderByDescending(b => b.TotalAmount).ToList(),
+            _ => filteredBookings.OrderByDescending(b => b.Id).ToList()
+        };
+        StateHasChanged();
+    }
+
+    private void ViewBookingDetails(BookingGetDto booking)
+    {
+        selectedBooking = booking;
+        showDetailsModal = true;
+        StateHasChanged();
+    }
+
+    private void CloseDetailsModal()
+    {
+        showDetailsModal = false;
+        selectedBooking = null;
+        StateHasChanged();
+    }
+
+    private string GetStatusClass(Status status)
+    {
+        return status switch
+        {
+            Status.Done => "status-done",
+            Status.Pending => "status-pending",
+            _ => "status-pending"
+        };
+    }
+
+    private string GetStatusIcon(Status status)
+    {
+        return status switch
+        {
+            Status.Done => "✅",
+            Status.Pending => "⏳",
+            _ => "⏳"
+        };
+    }
+
+    public class BookingStatistics
+    {
+        public int TotalBookings { get; set; }
+        public decimal TotalRevenue { get; set; }
+        public int ConfirmedBookings { get; set; }
+        public int PendingBookings { get; set; }
+    }
+}

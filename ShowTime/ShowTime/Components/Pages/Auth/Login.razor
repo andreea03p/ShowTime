@@ -280,12 +280,13 @@
 
             await httpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, claimsPrincipal);
 
-            navigationManager.NavigateTo("/festivals");
+            // navigationManager.NavigateTo("/festivals");
+            httpContext.Response.Redirect("/festivals");
         }
-        catch (Microsoft.AspNetCore.Components.NavigationException)
-        {
-            throw;
-        }
+        // catch (Microsoft.AspNetCore.Components.NavigationException)
+        // {
+        //     throw;
+        // }
         catch (Exception ex)
         {
             errorMessage = $"Login error: {ex.Message}";
