@@ -89,14 +89,14 @@
 //            return new FestivalGetDto
 //            {
 //                Id = festival.Id,
-//                Name = f.Name,
-//                Address = f.Location.Address,
-//                Latitude = f.Location.Latitude,
-//                Longitude = f.Location.Longitude,
-//                StartDate = f.StartDate,
-//                EndDate = f.EndDate,
-//                SplashArt = f.SplashArt,
-//                Capacity = f.Capacity
+//                Name = festival.Name,
+//                Address = festival.Location.Address,
+//                Latitude = festival.Location.Latitude,
+//                Longitude = festival.Location.Longitude,
+//                StartDate = festival.StartDate,
+//                EndDate = festival.EndDate,
+//                SplashArt = festival.SplashArt,
+//                Capacity = festival.Capacity
 //            };
 //        }
 //        catch (Exception ex)
@@ -420,21 +420,18 @@ public class FestivalService : IFestivalService
         {
             var festivals = await _festivalRepository.GetAllAsync();
 
-            return festivals.Where(f => !string.IsNullOrWhiteSpace(f.Name) && f.Id > 0) // Filter out empty/invalid festivals
-                          .Select(f => new FestivalGetDto
-                          {
-                              Id = f.Id,
-                              Name = f.Name?.Trim() ?? string.Empty,
-                              Address = f.Location?.Address?.Trim() ?? string.Empty,
-                              Latitude = f.Location?.Latitude ?? 0,
-                              Longitude = f.Location?.Longitude ?? 0,
-                              StartDate = f.StartDate,
-                              EndDate = f.EndDate,
-                              SplashArt = f.SplashArt?.Trim() ?? string.Empty,
-                              Capacity = f.Capacity
-                          })
-                          .Where(f => !string.IsNullOrWhiteSpace(f.Name)) // Additional filter on DTO level
-                          .ToList();
+            return festivals.Select(f => new FestivalGetDto
+            {
+                Id = f.Id,
+                Name = f.Name,
+                Address = f.Location.Address,
+                Latitude = f.Location.Latitude,
+                Longitude = f.Location.Longitude,
+                StartDate = f.StartDate,
+                EndDate = f.EndDate,
+                SplashArt = f.SplashArt,
+                Capacity = f.Capacity
+            }).ToList();
         }
         catch (Exception ex)
         {
@@ -448,7 +445,7 @@ public class FestivalService : IFestivalService
         {
             var festival = await _festivalRepository.GetByIdAsync(id);
 
-            if (festival == null || string.IsNullOrWhiteSpace(festival.Name))
+            if (festival == null)
             {
                 throw new KeyNotFoundException($"Festival with ID {id} not found.");
             }
@@ -456,13 +453,13 @@ public class FestivalService : IFestivalService
             return new FestivalGetDto
             {
                 Id = festival.Id,
-                Name = festival.Name?.Trim() ?? string.Empty,
-                Address = festival.Location?.Address?.Trim() ?? string.Empty,
-                Latitude = festival.Location?.Latitude ?? 0,
-                Longitude = festival.Location?.Longitude ?? 0,
+                Name = festival.Name,
+                Address = festival.Location.Address,
+                Latitude = festival.Location.Latitude,
+                Longitude = festival.Location.Longitude,
                 StartDate = festival.StartDate,
                 EndDate = festival.EndDate,
-                SplashArt = festival.SplashArt?.Trim() ?? string.Empty,
+                SplashArt = festival.SplashArt,
                 Capacity = festival.Capacity
             };
         }
@@ -484,13 +481,6 @@ public class FestivalService : IFestivalService
             }
 
             existingFestival.Name = updateDto.Name;
-            
-            // Ensure Location is initialized
-            if (existingFestival.Location == null)
-            {
-                existingFestival.Location = new Location();
-            }
-            
             existingFestival.Location.Address = updateDto.Address;
             existingFestival.Location.Latitude = updateDto.Latitude;
             existingFestival.Location.Longitude = updateDto.Longitude;
@@ -550,13 +540,13 @@ public class FestivalService : IFestivalService
                         Festival = new FestivalGetDto
                         {
                             Id = festival.Id,
-                            Name = festival.Name?.Trim() ?? string.Empty,
-                            Address = festival.Location?.Address?.Trim() ?? string.Empty,
-                            Latitude = festival.Location?.Latitude ?? 0,
-                            Longitude = festival.Location?.Longitude ?? 0,
+                            Name = festival.Name,
+                            Address = festival.Location.Address,
+                            Latitude = festival.Location.Latitude,
+                            Longitude = festival.Location.Longitude,
                             StartDate = festival.StartDate,
                             EndDate = festival.EndDate,
-                            SplashArt = festival.SplashArt?.Trim() ?? string.Empty,
+                            SplashArt = festival.SplashArt,
                             Capacity = festival.Capacity
                         },
                         Artist = new ArtistGetDto

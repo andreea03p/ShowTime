@@ -14,6 +14,6 @@ public class TicketGetDto
     public TicketType Type { get; set; }
     public decimal Price { get; set; }
     public int TicketsTotal { get; set; }
-    public bool IsAvailable { get; set; } = true;
-    public int AvailableQuantity { get; internal set; }
+    public int TicketsAvailable { get; set; }
+    public bool IsAvailable { get; set; }
 }

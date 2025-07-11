@@ -168,6 +168,11 @@
 
     .artist-selector {
         margin-bottom: 20px;
+        color: white;
+    }
+
+    .autocomplete-item {
+        color: #000;
     }
 
     .success-message {
@@ -273,7 +278,7 @@
 
                     <div class="form-section">
                         <h3>Update Artist</h3>
-                        <p class="form-description">Select an artist from the dropdown to update their information.</p>
+                        <p class="form-description">Start typing an artist name to search and select.</p>
 
                         @if (showUpdateSuccess)
                         {
@@ -283,14 +288,31 @@
                         }
 
                         <div class="artist-selector">
-                            <label>Select Artist to Update</label>
-                            <select class="form-control" @onchange="OnArtistSelected">
-                                <option value="">-- Select an Artist --</option>
-                                @foreach (var artist in artists)
+                            <label>Search Artist to Update</label>
+                            <div class="autocomplete-container" style="position: relative;">
+                                <input type="text" 
+                                       class="form-control" 
+                                       placeholder="Start typing artist name..." 
+                                       @bind="searchTerm" 
+                                       @oninput="OnSearchInput"
+                                       @onfocus="OnSearchFocus"
+                                       @onblur="OnSearchBlur" />
+                                
+                                @if (showDropdown && filteredArtists.Any())
                                 {
-                                    <option value="@artist.Id">@artist.Name</option>
+                                    <div class="autocomplete-dropdown" style="position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ccc; border-top: none; max-height: 200px; overflow-y: auto; z-index: 1000; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                        @foreach (var artist in filteredArtists.Take(10))
+                                        {
+                                            <div class="autocomplete-item" 
+                                                 style="padding: 10px; cursor: pointer; border-bottom: 1px solid #eee;"
+                                                 @onclick="() => SelectArtist(artist)"
+                                                 @onmousedown:preventDefault="true">
+                                                <strong>@artist.Name</strong> - @artist.Genre
+                                            </div>
+                                        }
+                                    </div>
                                 }
-                            </select>
+                            </div>
                         </div>
 
                         <EditForm Model="updatedArtist" OnValidSubmit="UpdateArtist" OnInvalidSubmit="OnUpdateInvalidSubmit" FormName="UpdateArtistForm" @ref="updateArtistFormRef">
@@ -337,6 +359,34 @@
     </div>
 </div>
 
+<style>
+    .autocomplete-item:hover {
+        background-color: #f5f5f5;
+    }
+    
+    .autocomplete-item:last-child {
+        border-bottom: none;
+    }
+    
+    .autocomplete-container {
+        position: relative;
+    }
+    
+    .autocomplete-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #ccc;
+        border-top: none;
+        max-height: 200px;
+        overflow-y: auto;
+        z-index: 1000;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+</style>
+
 @code {
     private IList<ArtistGetDto> artists = new List<ArtistGetDto>();
     private Dictionary<int, List<LineupGetDto>> artistFestivals = new();
@@ -353,6 +403,10 @@
     private int selectedArtistId = 0;
     private EditForm? addArtistFormRef;
     private EditForm? updateArtistFormRef;
+
+    private string searchTerm = "";
+    private bool showDropdown = false;
+    private IEnumerable<ArtistGetDto> filteredArtists = new List<ArtistGetDto>();
 
     protected override async Task OnInitializedAsync()
     {
@@ -403,6 +457,7 @@
                 await ArtistService.UpdateArtistAsync(updatedArtist, selectedArtistId);
                 updatedArtist = new ArtistUpdateDto();
                 selectedArtistId = 0;
+                searchTerm = "";
                 artists = await ArtistService.GetAllArtistsAsync();
 
                 showUpdateSuccess = true;
@@ -419,27 +474,55 @@
         }
     }
 
-    private async Task OnArtistSelected(ChangeEventArgs e)
+    private void OnSearchInput(ChangeEventArgs e)
     {
-        if (int.TryParse(e.Value?.ToString(), out int artistId) && artistId > 0)
-        {
-            selectedArtistId = artistId;
-            var selectedArtist = artists.FirstOrDefault(a => a.Id == artistId);
+        searchTerm = e.Value?.ToString() ?? "";
+        FilterArtists();
+    }
 
-            if (selectedArtist != null)
-            {
-                updatedArtist.Name = selectedArtist.Name;
-                updatedArtist.Genre = selectedArtist.Genre;
-                updatedArtist.Image = selectedArtist.Image;
-                StateHasChanged();
-            }
+    private void OnSearchFocus()
+    {
+        if (!string.IsNullOrEmpty(searchTerm))
+        {
+            FilterArtists();
+        }
+        showDropdown = true;
+    }
+
+    private async Task OnSearchBlur()
+    {
+        await Task.Delay(200);
+        showDropdown = false;
+    }
+
+    private void FilterArtists()
+    {
+        if (string.IsNullOrEmpty(searchTerm))
+        {
+            filteredArtists = new List<ArtistGetDto>();
         }
         else
         {
-            selectedArtistId = 0;
-            updatedArtist = new ArtistUpdateDto();
-            StateHasChanged();
+            filteredArtists = artists.Where(a => 
+                a.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                a.Genre.ToString().Contains(searchTerm, StringComparison.OrdinalIgnoreCase)
+            ).OrderBy(a => a.Name);
         }
+        
+        StateHasChanged();
+    }
+
+    private void SelectArtist(ArtistGetDto artist)
+    {
+        selectedArtistId = artist.Id;
+        searchTerm = artist.Name;
+        showDropdown = false;
+        
+        updatedArtist.Name = artist.Name;
+        updatedArtist.Genre = artist.Genre;
+        updatedArtist.Image = artist.Image;
+        
+        StateHasChanged();
     }
 
     private void OnAddInvalidSubmit()

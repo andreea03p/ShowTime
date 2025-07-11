@@ -15,6 +15,4 @@ public interface IBookingService
     Task<IList<BookingGetDto>> GetBookingsByUserIdAsync(int userId);
     Task<IList<BookingGetDto>> GetBookingsByFestivalIdAsync(int festivalId);
     Task<IEnumerable<BookingGetDto>> GetAllBookingsAsync();
-
-    //Task DeleteBookingAsync(int bookingId);
 }

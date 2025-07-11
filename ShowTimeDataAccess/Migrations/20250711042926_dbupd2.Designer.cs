@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ShowTime.DataAccess;
 
@@ -11,9 +12,11 @@ using ShowTime.DataAccess;
 namespace ShowTime.DataAccess.Migrations
 {
     [DbContext(typeof(ShowTimeDbContext))]
-    partial class ShowTimeDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250711042926_dbupd2")]
+    partial class dbupd2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -152,6 +155,9 @@ namespace ShowTime.DataAccess.Migrations
 
                     b.Property<int>("FestivalId")
                         .HasColumnType("int");
+
+                    b.Property<string>("FestivalName")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsAvailable")
                         .HasColumnType("bit");

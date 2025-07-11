@@ -12,9 +12,9 @@ namespace ShowTime.BusinessLogic.Abstraction;
 public interface ITicketService
 {
     Task<TicketGetDto> GetTicketByIdAsync(int id);
-    Task<IList<TicketGetDto>> GetTicketByFestivalIdAsync (int festivalId);
+    Task<IList<TicketGetDto>> GetTicketByFestivalIdAsync(int festivalId);
     Task<IList<TicketGetDto>> GetAllTicketsAsync();
-    Task AddTicketAsync(TicketCreateDto ticketCreateDto);
     Task DeleteTicketAsync(int id);
-    Task UpdateTicketAsync(TicketUpdateDto ticketUpdateDto, int id);
+    Task<TicketGetDto> UpdateTicketAsync(TicketUpdateDto ticketUpdateDto, int id);
+    Task<TicketGetDto> AddTicketAsync(TicketCreateDto ticketCreateDto);
 }

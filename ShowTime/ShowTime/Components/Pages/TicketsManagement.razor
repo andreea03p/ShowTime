@@ -1,11 +1,13 @@
 ﻿@page "/tickets-management"
 @using ShowTime.BusinessLogic.Abstraction
 @using ShowTime.BusinessLogic.Dtos
+@using ShowTime.BusinessLogic.Services
 @using ShowTime.DataAccess.Models
 @using ShowTime.DataAccess.Models.Enums
 @inject ITicketService TicketService
 @inject IFestivalService FestivalService
 @inject IJSRuntime JSRuntime
+@inject NavigationManager Navigation
 @rendermode InteractiveServer
 
 <style>
@@ -260,15 +262,23 @@
         color: white;
     }
 
-    .btn-manage {
-        background: linear-gradient(135deg, #8e44ad, #9b59b6);
+    .error-message {
+        background: linear-gradient(135deg, #e74c3c, #c0392b);
+        color: white;
+        padding: 10px;
         border-radius: 8px;
         margin-bottom: 20px;
+        font-weight: 500;
     }
 
-        .btn-manage:hover {
-            background: linear-gradient(135deg, #9b59b6, orange);
-        }
+    .success-message {
+        background: linear-gradient(135deg, #27ae60, #2ecc71);
+        color: white;
+        padding: 10px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        font-weight: 500;
+    }
 
     @@keyframes shimmer {
         0% {
@@ -287,21 +297,26 @@
             <Authorized Context="authContext">
                 <h1 class="page-title">Tickets Management</h1>
 
-                <button type="button" class="btn-custom btn-manage" @onclick="GoBookings">
-                    Bookings
-                </button>
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="error-message">@errorMessage</div>
+                }
+
+                @if (!string.IsNullOrEmpty(successMessage))
+                {
+                    <div class="success-message">@successMessage</div>
+                }
 
                 <div class="forms-container">
-
                     <!-- Add New Ticket Form -->
                     <div class="form-section">
                         <h3>Add New Ticket</h3>
-                        <EditForm Model="newTicket" OnValidSubmit="AddTicket" FormName="AddTicketForm" @ref="addFormRef">
+                        <EditForm Model="newTicket" OnValidSubmit="AddTicket" OnInvalidSubmit="OnAddFormInvalidSubmit">
                             <DataAnnotationsValidator />
 
                             <div class="form-group">
                                 <label class="required">Festival</label>
-                                <InputSelect @bind-Value="newTicket.FestivalId" class="form-control" @oninput="OnFieldChanged">
+                                <InputSelect @bind-Value="newTicket.FestivalId" class="form-control">
                                     <option value="0">-- Select Festival --</option>
                                     @foreach (var festival in festivals)
                                     {
@@ -313,7 +328,7 @@
 
                             <div class="form-group">
                                 <label class="required">Ticket Type</label>
-                                <InputSelect @bind-Value="newTicket.Type" class="form-control" @oninput="OnFieldChanged">
+                                <InputSelect @bind-Value="newTicket.Type" class="form-control">
                                     <option value="">-- Select Ticket Type --</option>
                                     @foreach (var ticketType in Enum.GetValues(typeof(TicketType)).Cast<TicketType>())
                                     {
@@ -328,8 +343,7 @@
                                 <InputNumber @bind-Value="newTicket.Price"
                                              class="form-control"
                                              placeholder="e.g., 99.99"
-                                             step="0.01"
-                                             @oninput="OnFieldChanged" />
+                                             step="0.01" />
                                 <ValidationMessage For="@(() => newTicket.Price)" class="validation-message" />
                             </div>
 
@@ -337,24 +351,31 @@
                                 <label class="required">Quantity Available</label>
                                 <InputNumber @bind-Value="newTicket.Quantity"
                                              class="form-control"
-                                             placeholder="e.g., 500"
-                                             @oninput="OnFieldChanged" />
+                                             placeholder="e.g., 500" />
                                 <ValidationMessage For="@(() => newTicket.Quantity)" class="validation-message" />
                             </div>
 
                             <div class="form-group">
                                 <label>
-                                    <InputCheckbox @bind-Value="newTicket.IsAvailable" @oninput="OnFieldChanged" />
+                                    <InputCheckbox @bind-Value="newTicket.IsAvailable" />
                                     Available for Sale
                                 </label>
                             </div>
 
-                            <button type="submit" class="btn-custom" disabled="@(!IsAddFormValid)">
-                                Add Ticket
+                            <button type="submit" class="btn-custom" disabled="@isAddingTicket">
+                                @if (isAddingTicket)
+                                {
+                                    <span>Adding...</span>
+                                }
+                                else
+                                {
+                                    <span>Add Ticket</span>
+                                }
                             </button>
                         </EditForm>
                     </div>
 
+                    <!-- Update Ticket Form -->
                     <div class="form-section">
                         <h3>Update Ticket</h3>
                         <p>Select ticket to update from existing tickets below</p>
@@ -363,17 +384,16 @@
                             <option value="">-- Select a Ticket --</option>
                             @foreach (var ticket in tickets)
                             {
-                                var festival = festivals.FirstOrDefault(f => f.Id == ticket.FestivalId);
-                                <option value="@ticket.Id">@(festival?.Name ?? "Unknown") - @ticket.Type ($@ticket.Price)</option>
+                                <option value="@ticket.Id">@GetFestivalName(ticket.FestivalId) - @ticket.Type ($@ticket.Price)</option>
                             }
                         </select>
 
-                        <EditForm Model="updatedTicket" OnValidSubmit="UpdateTicket" FormName="UpdateTicketForm" @ref="updateFormRef">
+                        <EditForm Model="updatedTicket" OnValidSubmit="UpdateTicket" OnInvalidSubmit="OnUpdateFormInvalidSubmit">
                             <DataAnnotationsValidator />
 
                             <div class="form-group">
                                 <label class="required">Festival</label>
-                                <InputSelect @bind-Value="updatedTicket.FestivalId" class="form-control" @oninput="OnUpdateFieldChanged">
+                                <InputSelect @bind-Value="updatedTicket.FestivalId" class="form-control">
                                     <option value="0">-- Select Festival --</option>
                                     @foreach (var festival in festivals)
                                     {
@@ -385,7 +405,7 @@
 
                             <div class="form-group">
                                 <label class="required">Ticket Type</label>
-                                <InputSelect @bind-Value="updatedTicket.Type" class="form-control" @oninput="OnUpdateFieldChanged">
+                                <InputSelect @bind-Value="updatedTicket.Type" class="form-control">
                                     <option value="">-- Select Ticket Type --</option>
                                     @foreach (var ticketType in Enum.GetValues(typeof(TicketType)).Cast<TicketType>())
                                     {
@@ -399,28 +419,33 @@
                                 <label class="required">Price</label>
                                 <InputNumber @bind-Value="updatedTicket.Price"
                                              class="form-control"
-                                             step="0.01"
-                                             @oninput="OnUpdateFieldChanged" />
+                                             step="0.01" />
                                 <ValidationMessage For="@(() => updatedTicket.Price)" class="validation-message" />
                             </div>
 
                             <div class="form-group">
                                 <label class="required">Quantity Available</label>
                                 <InputNumber @bind-Value="updatedTicket.Quantity"
-                                             class="form-control"
-                                             @oninput="OnUpdateFieldChanged" />
+                                             class="form-control" />
                                 <ValidationMessage For="@(() => updatedTicket.Quantity)" class="validation-message" />
                             </div>
 
                             <div class="form-group">
                                 <label>
-                                    <InputCheckbox @bind-Value="updatedTicket.IsAvailable" @oninput="OnUpdateFieldChanged" />
+                                    <InputCheckbox @bind-Value="updatedTicket.IsAvailable" />
                                     Available for Sale
                                 </label>
                             </div>
 
-                            <button type="submit" class="btn-custom" disabled="@(selectedTicketId == 0 || !IsUpdateFormValid)">
-                                Update Ticket
+                            <button type="submit" class="btn-custom" disabled="@(selectedTicketId == 0 || isUpdatingTicket)">
+                                @if (isUpdatingTicket)
+                                {
+                                    <span>Updating...</span>
+                                }
+                                else
+                                {
+                                    <span>Update Ticket</span>
+                                }
                             </button>
                         </EditForm>
                     </div>
@@ -428,10 +453,10 @@
             </Authorized>
         </AuthorizeView>
 
-
+        <!-- Display All Tickets -->
         <div class="form-section">
             <h3>All Tickets</h3>
-            @if (tickets.Count == 0)
+            @if (!tickets.Any())
             {
                 <div class="no-tickets">
                     <p>No tickets created yet.</p>
@@ -443,7 +468,6 @@
                 <div class="tickets-grid">
                     @foreach (var ticket in tickets)
                     {
-                        var festival = festivals.FirstOrDefault(f => f.Id == ticket.FestivalId);
                         <div class="ticket-card">
                             <div class="ticket-type">@ticket.Type</div>
                             <div class="ticket-price">$@ticket.Price.ToString("F2")</div>
@@ -451,11 +475,15 @@
                             <div class="ticket-details">
                                 <div class="ticket-detail-item">
                                     <span>Festival:</span>
-                                    <span>@(festival?.Name ?? "Unknown")</span>
+                                    <span>@GetFestivalName(ticket.FestivalId)</span>
                                 </div>
                                 <div class="ticket-detail-item">
                                     <span>Quantity:</span>
                                     <span>@ticket.TicketsTotal</span>
+                                </div>
+                                <div class="ticket-detail-item">
+                                    <span>Available:</span>
+                                    <span>@ticket.TicketsAvailable</span>
                                 </div>
                                 <div class="ticket-detail-item">
                                     <span>Status:</span>
@@ -472,7 +500,7 @@
                             <AuthorizeView Roles="Admin">
                                 <Authorized>
                                     <div class="ticket-actions">
-                                        <button type="button" class="btn-custom btn-delete" @onclick="() => PopupDeleteTicket(ticket.Id)">
+                                        <button type="button" class="btn-custom btn-delete" @onclick="() => DeleteTicket(ticket.Id)">
                                             Delete Ticket
                                         </button>
                                     </div>
@@ -487,24 +515,27 @@
 </div>
 
 @code {
-    private IList<TicketGetDto> tickets = new List<TicketGetDto>();
-    private IList<FestivalGetDto> festivals = new List<FestivalGetDto>();
+    private List<TicketGetDto> tickets = new();
+    private List<FestivalGetDto> festivals = new();
 
-    [SupplyParameterFromForm]
-    private TicketCreateDto newTicket { get; set; } = new TicketCreateDto();
-
-    [SupplyParameterFromForm]
-    private TicketUpdateDto updatedTicket { get; set; } = new TicketUpdateDto();
+    private TicketCreateDto newTicket = new();
+    private TicketUpdateDto updatedTicket = new();
 
     private int selectedTicketId = 0;
-    private EditForm? addFormRef;
-    private EditForm? updateFormRef;
+    private bool isAddingTicket = false;
+    private bool isUpdatingTicket = false;
+    private string errorMessage = string.Empty;
+    private string successMessage = string.Empty;
 
-    public bool IsAddFormValid => addFormRef?.EditContext?.Validate() ?? false;
-    public bool IsUpdateFormValid => updateFormRef?.EditContext?.Validate() ?? false;
+    @inject AuthenticationStateProvider AuthenticationStateProvider;
 
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        if (!authState.User.IsInRole("Admin"))
+        {
+            Navigation.NavigateTo("/access-denied");
+        }
         await LoadData();
     }
 
@@ -512,12 +543,12 @@
     {
         try
         {
-            festivals = await FestivalService.GetAllFestivalsAsync();
-            tickets = await TicketService.GetAllTicketsAsync();
+            tickets = (await TicketService.GetAllTicketsAsync()).ToList();
+            festivals = (await FestivalService.GetAllFestivalsAsync()).ToList();
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error loading data: {ex.Message}");
+            errorMessage = $"Error loading data: {ex.Message}";
         }
     }
 
@@ -525,15 +556,50 @@
     {
         try
         {
+            ClearMessages();
+
+            if (newTicket.FestivalId <= 0)
+            {
+                errorMessage = "Please select a festival.";
+                return;
+            }
+
+            if (!newTicket.Type.HasValue)
+            {
+                errorMessage = "Please select a ticket type.";
+                return;
+            }
+
+            if (newTicket.Price <= 0)
+            {
+                errorMessage = "Please enter a valid price greater than 0.";
+                return;
+            }
+
+            if (newTicket.Quantity <= 0)
+            {
+                errorMessage = "Please enter a valid quantity greater than 0.";
+                return;
+            }
+
+            isAddingTicket = true;
+
             await TicketService.AddTicketAsync(newTicket);
+
+            successMessage = "Ticket added successfully!";
+
             newTicket = new TicketCreateDto();
+
             await LoadData();
-            await JSRuntime.InvokeVoidAsync("alert", "Ticket added successfully!");
-            StateHasChanged();
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error adding ticket: {ex.Message}");
+            errorMessage = $"Error adding ticket: {ex.Message}";
+        }
+        finally
+        {
+            isAddingTicket = false;
+            StateHasChanged();
         }
     }
 
@@ -541,84 +607,140 @@
     {
         try
         {
-            if (selectedTicketId > 0)
+            ClearMessages();
+
+            if (updatedTicket.FestivalId <= 0)
             {
-                await TicketService.UpdateTicketAsync(updatedTicket, selectedTicketId);
-                updatedTicket = new TicketUpdateDto();
-                selectedTicketId = 0;
-                await LoadData();
-                await JSRuntime.InvokeVoidAsync("alert", "Ticket updated successfully!");
-                StateHasChanged();
+                errorMessage = "Please select a festival.";
+                return;
             }
+
+            if (!updatedTicket.Type.HasValue)
+            {
+                errorMessage = "Please select a ticket type.";
+                return;
+            }
+
+            if (updatedTicket.Price <= 0)
+            {
+                errorMessage = "Please enter a valid price greater than 0.";
+                return;
+            }
+
+            if (updatedTicket.Quantity <= 0)
+            {
+                errorMessage = "Please enter a valid quantity greater than 0.";
+                return;
+            }
+
+            isUpdatingTicket = true;
+
+            await TicketService.UpdateTicketAsync(updatedTicket, selectedTicketId);
+
+            successMessage = "Ticket updated successfully!";
+
+            updatedTicket = new TicketUpdateDto();
+            selectedTicketId = 0;
+
+            await LoadData();
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error updating ticket: {ex.Message}");
+            errorMessage = $"Error updating ticket: {ex.Message}";
+        }
+        finally
+        {
+            isUpdatingTicket = false;
+            StateHasChanged();
         }
     }
 
-    private async Task DeleteTicket(int id)
+    private async Task DeleteTicket(int ticketId)
     {
         try
         {
-            await TicketService.DeleteTicketAsync(id);
+            ClearMessages();
+
+            bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm",
+                "Are you sure you want to delete this ticket? This action cannot be undone.");
+
+            if (!confirmed)
+                return;
+
+            await TicketService.DeleteTicketAsync(ticketId);
+
+            successMessage = "Ticket deleted successfully!";
+
             await LoadData();
-            await JSRuntime.InvokeVoidAsync("alert", "Ticket deleted successfully!");
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error deleting ticket: {ex.Message}");
+            errorMessage = $"Error deleting ticket: {ex.Message}";
         }
-    }
-
-    private async Task PopupDeleteTicket(int id)
-    {
-        if (await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to delete this ticket? This action cannot be undone."))
+        finally
         {
-            await DeleteTicket(id);
+            StateHasChanged();
         }
     }
 
     private async Task OnTicketSelected(ChangeEventArgs e)
     {
-        if (int.TryParse(e.Value?.ToString(), out int ticketId) && ticketId > 0)
+        try
         {
-            selectedTicketId = ticketId;
-            var selectedTicket = await TicketService.GetTicketByIdAsync(ticketId);
+            ClearMessages();
 
-            if (selectedTicket != null)
+            if (int.TryParse(e.Value?.ToString(), out int ticketId) && ticketId > 0)
             {
-                updatedTicket.FestivalId = selectedTicket.FestivalId;
-                updatedTicket.Type = selectedTicket.Type;
-                updatedTicket.Price = selectedTicket.Price;
-                updatedTicket.Quantity = selectedTicket.TicketsTotal;
-                updatedTicket.IsAvailable = selectedTicket.IsAvailable;
-                StateHasChanged();
+                selectedTicketId = ticketId;
+
+                var ticket = await TicketService.GetTicketByIdAsync(ticketId);
+
+                updatedTicket = new TicketUpdateDto
+                {
+                    FestivalId = ticket.FestivalId,
+                    Type = ticket.Type,
+                    Price = ticket.Price,
+                    Quantity = ticket.TicketsTotal,
+                    IsAvailable = ticket.IsAvailable
+                };
+            }
+            else
+            {
+                selectedTicketId = 0;
+                updatedTicket = new TicketUpdateDto();
             }
         }
-        else
+        catch (Exception ex)
         {
-            selectedTicketId = 0;
-            updatedTicket = new TicketUpdateDto();
+            errorMessage = $"Error loading ticket details: {ex.Message}";
+        }
+        finally
+        {
             StateHasChanged();
         }
     }
 
-    @inject NavigationManager Navigation
-    private void GoBookings()
+    private void OnAddFormInvalidSubmit()
     {
-        Navigation.NavigateTo("/bookings");
-    }
-
-    private void OnFieldChanged()
-    {
-        addFormRef?.EditContext?.Validate();
+        errorMessage = "Please correct the validation errors and try again.";
         StateHasChanged();
     }
 
-    private void OnUpdateFieldChanged()
+    private void OnUpdateFormInvalidSubmit()
     {
-        updateFormRef?.EditContext?.Validate();
+        errorMessage = "Please correct the validation errors and try again.";
         StateHasChanged();
+    }
+
+    private string GetFestivalName(int festivalId)
+    {
+        var festival = festivals.FirstOrDefault(f => f.Id == festivalId);
+        return festival?.Name ?? "Unknown Festival";
+    }
+
+    private void ClearMessages()
+    {
+        errorMessage = string.Empty;
+        successMessage = string.Empty;
     }
 }

@@ -524,6 +524,12 @@
 
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        if (!authState.User.IsInRole("Admin"))
+        {
+            Navigation.NavigateTo("/access-denied");
+        }
+
         await LoadData();
 
         var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
@@ -541,11 +547,7 @@
             }
         }
 
-        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        if (!authState.User.IsInRole("Admin"))
-        {
-            Navigation.NavigateTo("/access-denied");
-        }
+
     }
 
     private async Task LoadData()

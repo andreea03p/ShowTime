@@ -288,6 +288,10 @@
                 <button type="button" class="btn-custom btn-manage" @onclick="ManageFestivals">
                     Manage Festivals
                 </button>
+                <button type="button" class="btn-custom btn-manage" onclick="window.location.href='tickets-management'">
+                    <i class="bi bi-ticket-detailed-fill"></i>
+                    Tickets
+                </button>
             </Authorized>
         </AuthorizeView>
 
@@ -325,14 +329,6 @@
                                      <i class="bi bi-eye"></i>
                                      View Details
                                 </button>
-                                <AuthorizeView Roles="Admin">
-                                    <Authorized>
-                                        <button type="button" class="btn-custom btn-delete" onclick="window.location.href='tickets-management'">
-                                            <i class="bi bi-ticket-detailed-fill"></i>
-                                            Tickets
-                                        </button>
-                                    </Authorized>
-                                </AuthorizeView>
                                 <AuthorizeView Roles="Admin">
                                     <Authorized>
                                         <button type="button" class="btn-custom btn-delete" @onclick="() => PopupDeleteFestival(fest.Id)">
