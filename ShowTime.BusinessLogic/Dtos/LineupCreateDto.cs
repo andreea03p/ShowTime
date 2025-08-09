@@ -16,10 +16,11 @@ public class LineupCreateDto
     public int ArtistId { get; set; }
 
     [Required]
-    [StringLength(100)]
+    [StringLength(30)]
     public string Stage { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Start date is required.")]
     [DataType(DataType.DateTime)]
     public DateTime? StartTime { get; set; } = DateTime.Now;
+
 }

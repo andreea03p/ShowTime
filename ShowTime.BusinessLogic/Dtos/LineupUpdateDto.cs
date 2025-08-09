@@ -15,5 +15,5 @@ public class LineupUpdateDto
 
     [Required(ErrorMessage = "Start date is required.")]
     [DataType(DataType.DateTime)]
-    public DateTimeOffset StartTime { get; set; } = DateTime.Now;
+    public DateTime StartTime { get; set; } = DateTime.Now;
 }

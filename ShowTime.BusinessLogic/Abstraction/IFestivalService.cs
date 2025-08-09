@@ -17,9 +17,9 @@ public interface IFestivalService
 
 
     Task<List<LineupGetDto>> GetCompleteLineupForFestivalAsync(int festivalId);
-    Task AddArtistToFestivalLineupAsync(int festivalId, int artistId, string stage, DateTimeOffset startTime);
+    Task AddArtistToFestivalLineupAsync(int festivalId, int artistId, string stage, DateTime startTime);
     Task RemoveArtistFromLineupAsync(int festivalId, int artistId);
-    Task UpdateLineupEntryAsync(int festivalId, int artistId, string stage, DateTimeOffset startTime);
+    Task UpdateLineupEntryAsync(int festivalId, int artistId, string stage, DateTime startTime);
 
     Task<List<LineupGetDto>> GetLineupByStageAsync(int festivalId, string stage);
     Task<List<LineupGetDto>> GetLineupByDayAsync(int festivalId, DateTime day);

@@ -568,7 +568,7 @@ public class FestivalService : IFestivalService
         }
     }
 
-    public async Task AddArtistToFestivalLineupAsync(int festivalId, int artistId, string stage, DateTimeOffset startTime)
+    public async Task AddArtistToFestivalLineupAsync(int festivalId, int artistId, string stage, DateTime startTime)
     {
         try
         {
@@ -656,7 +656,7 @@ public class FestivalService : IFestivalService
         }
     }
 
-    public async Task UpdateLineupEntryAsync(int festivalId, int artistId, string stage, DateTimeOffset startTime)
+    public async Task UpdateLineupEntryAsync(int festivalId, int artistId, string stage, DateTime startTime)
     {
         try
         {

@@ -11,7 +11,7 @@ public class Lineup
 {
     public int FestivalId { get; set; }
     public int ArtistId { get; set; }
-    public DateTimeOffset StartTime { get; set; } = DateTimeOffset.Now;
+    public DateTime StartTime { get; set; } = DateTime.Now;
     public string Stage { get; set; } = string.Empty;
 
     public virtual Festival Festival { get; set; } = new Festival

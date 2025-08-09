@@ -112,13 +112,11 @@ public class BookingService : IBookingService
                     TicketId = booking.TicketId,
                     UserId = booking.UserId,
                     Quantity = booking.Quantity,
-                    BookingStatus = booking.BookingStatus,
                     UserName = user.Username ?? string.Empty,
                     UserEmail = user.Email ?? string.Empty,
                     FestivalName = festival?.Name ?? "Unknown Festival",
                     TicketType = ticket?.TicketType.ToString() ?? "Unknown Ticket",
                     TicketPrice = ticket?.Price ?? 0,
-                    TotalAmount = (ticket?.Price ?? 0) * booking.Quantity,
                     FestivalDate = festival?.StartDate ?? DateTime.Now
                 });
             }
@@ -163,13 +161,11 @@ public class BookingService : IBookingService
                     TicketId = booking.TicketId,
                     UserId = booking.UserId,
                     Quantity = booking.Quantity,
-                    BookingStatus = booking.BookingStatus,
                     UserName = user?.Username ?? "Unknown User",
                     UserEmail = user?.Email ?? string.Empty,
                     FestivalName = festival.Name,
                     TicketType = ticket?.TicketType.ToString() ?? "Unknown Ticket",
                     TicketPrice = ticket?.Price ?? 0,
-                    TotalAmount = (ticket?.Price ?? 0) * booking.Quantity,
                     FestivalDate = festival.StartDate
                 });
             }
@@ -205,13 +201,11 @@ public class BookingService : IBookingService
                     TicketId = booking.TicketId,
                     UserId = booking.UserId,
                     Quantity = booking.Quantity,
-                    BookingStatus = booking.BookingStatus,
                     UserName = user?.Username ?? "Unknown User",
                     UserEmail = user?.Email ?? string.Empty,
                     FestivalName = festival?.Name ?? "Unknown Festival",
                     TicketType = ticket?.TicketType.ToString() ?? "Unknown Ticket",
                     TicketPrice = ticket?.Price ?? 0,
-                    TotalAmount = (ticket?.Price ?? 0) * booking.Quantity,
                     FestivalDate = festival?.StartDate ?? DateTime.Now
                 });
             }

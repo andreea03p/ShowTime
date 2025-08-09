@@ -10,18 +10,18 @@ namespace ShowTime.BusinessLogic.Dtos;
 
 public class TicketCreateDto
 {
-    [Required(ErrorMessage = "Festival is required")]
+    [Required(ErrorMessage = "Festival is required.")]
     [Range(1, int.MaxValue, ErrorMessage = "Please select a festival")]
     public int FestivalId { get; set; } = 12;
 
-    [Required(ErrorMessage = "Ticket type is required")]
+    [Required(ErrorMessage = "Ticket type is required.")]
     public TicketType? Type { get; set; }
 
-    [Required(ErrorMessage = "Price is required")]
+    [Required(ErrorMessage = "Price is required.")]
     [Range(0.01, double.MaxValue, ErrorMessage = "Price must be greater than 0")]
     public decimal Price { get; set; }
 
-    [Required(ErrorMessage = "Quantity is required")]
+    [Required(ErrorMessage = "Quantity is required.")]
     [Range(1, int.MaxValue, ErrorMessage = "Quantity must be at least 1")]
     public int Quantity { get; set; }
 

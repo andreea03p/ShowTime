@@ -118,38 +118,105 @@
         font-weight: 500;
     }
 
-    .login-btn {
+    /* Layered Button Styles */
+    .login-btn-container {
+        position: relative;
         width: 100%;
-        padding: 12px 24px;
-        font-size: 1rem;
-        font-weight: 500;
-        text-align: center;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        background: linear-gradient(135deg, #27ae60, #2ecc71);
-        color: black;
-        box-shadow: 0 4px 15px rgba(52,152,219,0.3);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 48px;
+        height: 56px;
+        margin-top: 10px;
     }
 
-        .login-btn:hover:not(:disabled) {
-            background: linear-gradient(135deg, #2ecc71, #1abc9c);
+    .login-btn-stack {
+        position: relative;
+        cursor: pointer;
+        transition: transform 0.2s ease;
+        width: 100%;
+        height: 100%;
+        border: none;
+        background: transparent;
+        padding: 0;
+    }
+
+        .login-btn-stack:hover:not(:disabled) {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(52,152,219,0.4);
         }
 
-        .login-btn:disabled {
-            background: linear-gradient(135deg, #bdc3c7, #95a5a6);
+        .login-btn-stack:active:not(:disabled) {
+            transform: translateY(0px);
+        }
+
+        .login-btn-stack:disabled {
             cursor: not-allowed;
-            transform: none;
             opacity: 0.7;
         }
 
+    .login-btn-layer {
+        position: absolute;
+        width: 100%;
+        height: 48px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 500;
+        font-size: 1rem;
+        border: none;
+        transition: all 0.2s ease;
+        pointer-events: none;
+    }
+
+    .login-layer-bottom {
+        background: #104F55;
+        top: 6px;
+        left: 6px;
+        z-index: 1;
+    }
+
+    .login-layer-middle {
+        background: #9EC5AB;
+        top: 3px;
+        left: 3px;
+        z-index: 2;
+    }
+
+    .login-layer-top {
+        background: #01200F;
+        color: white;
+        top: 0;
+        left: 0;
+        z-index: 3;
+        font-weight: 600;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+
+    .login-btn-stack:hover:not(:disabled) .login-layer-top {
+        transform: translate(-1px, -1px);
+    }
+
+    .login-btn-stack:hover:not(:disabled) .login-layer-middle {
+        transform: translate(-1px, -1px);
+    }
+
+    .login-btn-stack:active:not(:disabled) .login-layer-top {
+        transform: translate(2px, 2px);
+    }
+
+    .login-btn-stack:active:not(:disabled) .login-layer-middle {
+        transform: translate(1px, 1px);
+    }
+
+    .login-btn-stack:disabled .login-layer-top {
+        background: #6c757d;
+        color: #adb5bd;
+    }
+
+    .login-btn-stack:disabled .login-layer-middle {
+        background: #95a5a6;
+    }
+
+    .login-btn-stack:disabled .login-layer-bottom {
+        background: #5a6268;
+    }
 
     .register-link {
         margin: 0;
@@ -170,29 +237,22 @@
             }
 
     @@keyframes spin {
-        to
-
-    {
-        transform: rotate(360deg);
-    }
-
+        to {
+            transform: rotate(360deg);
+        }
     }
 
     @@keyframes fadeInUp {
-        from
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
 
-    {
-        opacity: 0;
-        transform: translateY(30px);
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-
-    }
-
 </style>
 
 <div class="login-container">
@@ -220,7 +280,15 @@
                     <ValidationMessage For="@(() => loginInfo.Password)" class="validation-error" />
                 </div>
 
-                <button type="submit" class="login-btn"> Login </button>
+                <div class="login-btn-container">
+                    <button type="submit" class="login-btn-stack">
+                        <div class="login-btn-layer login-layer-bottom"></div>
+                        <div class="login-btn-layer login-layer-middle"></div>
+                        <div class="login-btn-layer login-layer-top">
+                            <span>Login</span>
+                        </div>
+                    </button>
+                </div>
 
             </EditForm>
         </div>
@@ -230,7 +298,6 @@
     </div>
 </div>
 
-
 @code {
     [SupplyParameterFromForm]
     private LoginDto loginInfo { get; set; } = new LoginDto();
@@ -239,11 +306,13 @@
     private HttpContext httpContext { get; set; } = null!;
 
     private string? errorMessage;
+    private bool isProcessing = false;
 
     private async Task Authenticate()
     {
         try
         {
+            isProcessing = true;
             errorMessage = null;
             StateHasChanged();
 
@@ -268,31 +337,27 @@
             }
 
             var claims = new List<Claim>
-        {
-            new Claim(ClaimTypes.NameIdentifier, loginResult.UserId.ToString()),
-            new Claim(ClaimTypes.Email, loginResult.Email ?? ""),
-            new Claim(ClaimTypes.Name, loginResult.Username ?? ""),
-            new Claim(ClaimTypes.Role, Enum.GetName(typeof(Role), loginResult.Role) ?? nameof(Role.User))
-        };
+            {
+                new Claim(ClaimTypes.NameIdentifier, loginResult.UserId.ToString()),
+                new Claim(ClaimTypes.Email, loginResult.Email ?? ""),
+                new Claim(ClaimTypes.Name, loginResult.Username ?? ""),
+                new Claim(ClaimTypes.Role, Enum.GetName(typeof(Role), loginResult.Role) ?? nameof(Role.User))
+            };
 
             var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
             var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
 
             await httpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, claimsPrincipal);
 
-            // navigationManager.NavigateTo("/festivals");
             httpContext.Response.Redirect("/festivals");
         }
-        // catch (Microsoft.AspNetCore.Components.NavigationException)
-        // {
-        //     throw;
-        // }
         catch (Exception ex)
         {
             errorMessage = $"Login error: {ex.Message}";
         }
         finally
         {
+            isProcessing = false;
             StateHasChanged();
         }
     }

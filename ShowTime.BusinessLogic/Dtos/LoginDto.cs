@@ -9,9 +9,9 @@ namespace ShowTime.BusinessLogic.Dtos;
 
 public class LoginDto
 {
-    [Required(ErrorMessage = "email is required")]
+    [Required(ErrorMessage = "Email is required.")]
     public string Email { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "password is required")]
+    [Required(ErrorMessage = "Password is required.")]
     public string Password { get; set; } = string.Empty;
 }

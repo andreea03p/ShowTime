@@ -190,6 +190,108 @@
             animation: fadeIn 0.3s ease-in;
         }
 
+
+
+    .add-artist-btn-container {
+        position: relative;
+        width: 100%;
+        height: 56px;
+        margin-top: 10px;
+    }
+
+    .add-artist-btn-stack {
+        position: relative;
+        cursor: pointer;
+        transition: transform 0.2s ease;
+        width: 100%;
+        height: 100%;
+        border: none;
+        background: transparent;
+        padding: 0;
+        font-family: inherit;
+    }
+
+        .add-artist-btn-stack:hover:not(:disabled) {
+            transform: translateY(-2px);
+        }
+
+        .add-artist-btn-stack:active:not(:disabled) {
+            transform: translateY(0px);
+        }
+
+        .add-artist-btn-stack:disabled {
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+    .add-artist-btn-layer {
+        position: absolute;
+        width: 100%;
+        height: 48px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 500;
+        font-size: 1rem;
+        border: none;
+        transition: all 0.2s ease;
+        pointer-events: none;
+    }
+
+    .add-artist-layer-bottom {
+        background: #001021;
+        top: 6px;
+        left: 6px;
+        z-index: 1;
+    }
+
+    .add-artist-layer-middle {
+        background: #11B5E4;
+        top: 3px;
+        left: 3px;
+        z-index: 2;
+    }
+
+    .add-artist-layer-top {
+        background: #1481BA;
+        color: white;
+        top: 0;
+        left: 0;
+        z-index: 3;
+        font-weight: 600;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+
+    .add-artist-btn-stack:hover:not(:disabled) .add-artist-layer-top {
+        transform: translate(-1px, -1px);
+    }
+
+    .add-artist-btn-stack:hover:not(:disabled) .add-artist-layer-middle {
+        transform: translate(-1px, -1px);
+    }
+
+    .add-artist-btn-stack:active:not(:disabled) .add-artist-layer-top {
+        transform: translate(2px, 2px);
+    }
+
+    .add-artist-btn-stack:active:not(:disabled) .add-artist-layer-middle {
+        transform: translate(1px, 1px);
+    }
+
+    .add-artist-btn-stack:disabled .add-artist-layer-top {
+        background: #6c757d;
+        color: #adb5bd;
+    }
+
+    .add-artist-btn-stack:disabled .add-artist-layer-middle {
+        background: #95a5a6;
+    }
+
+    .add-artist-btn-stack:disabled .add-artist-layer-bottom {
+        background: #5a6268;
+    }
+
     @@keyframes fadeIn {
         from
 
@@ -270,9 +372,15 @@
                                 <ValidationMessage For="@(() => newArtist.Image)" class="validation-message" />
                             </div>
 
-                            <button type="submit" class="btn-custom">
-                                Add Artist
-                            </button>
+                            <div class="add-artist-btn-container">
+                                <button type="submit" class="add-artist-btn-stack">
+                                    <div class="add-artist-btn-layer add-artist-layer-bottom"></div>
+                                    <div class="add-artist-btn-layer add-artist-layer-middle"></div>
+                                    <div class="add-artist-btn-layer add-artist-layer-top">
+                                        <span>Add Artist</span>
+                                    </div>
+                                </button>
+                            </div>
                         </EditForm>
                     </div>
 
@@ -342,9 +450,15 @@
                                 <ValidationMessage For="@(() => updatedArtist.Image)" class="validation-message" />
                             </div>
 
-                            <button type="submit" class="btn-custom" disabled="@(selectedArtistId == 0)">
-                                Update Artist
-                            </button>
+                            <div class="add-artist-btn-container">
+                                <button type="submit" class="add-artist-btn-stack">
+                                    <div class="add-artist-btn-layer add-artist-layer-bottom"></div>
+                                    <div class="add-artist-btn-layer add-artist-layer-middle"></div>
+                                    <div class="add-artist-btn-layer add-artist-layer-top">
+                                        <span>Update Artist</span>
+                                    </div>
+                                </button>
+                            </div>
                         </EditForm>
                     </div>
                 </div>

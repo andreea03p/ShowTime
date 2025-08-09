@@ -38,7 +38,7 @@ public class FestivalCreateDto
     public string? SplashArt { get; set; } = "https://www.shutterstock.com/image-vector/default-ui-image-placeholder-wireframes-600nw-1037719192.jpg";
 
     [Required(ErrorMessage = "Capacity is required.")]
-    [Range(1, 1000000, ErrorMessage = "Capacity must be between 1 and 10000000.")]
+    [Range(1, 1000000, ErrorMessage = "Capacity must be between 1 and 1000000.")]
     public int Capacity { get; set; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)

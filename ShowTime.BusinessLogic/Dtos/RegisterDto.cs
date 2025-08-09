@@ -20,7 +20,4 @@ public class RegisterDto
     [Required(ErrorMessage = "Confirm your password.")]
     [Compare("Password", ErrorMessage = "Passwords do not match.")]
     public string ConfirmPassword { get; set; } = string.Empty;
-
-    [Required(ErrorMessage = "Role is required.")]
-    public Role Role { get; set; } = Role.User;
 }
