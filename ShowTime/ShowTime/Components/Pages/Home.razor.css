@@ -103,6 +103,110 @@
         background: black;
     }
 
+/* Layered Button Styles */
+.add-artist-btn-container {
+    position: relative;
+    width: 20%;
+    height: 56px;
+    margin-bottom: 10px;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 20px;
+}
+
+.add-artist-btn-stack {
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: transparent;
+    padding: 0;
+    font-family: inherit;
+}
+
+    .add-artist-btn-stack:hover:not(:disabled) {
+        transform: translateY(-2px);
+    }
+
+    .add-artist-btn-stack:active:not(:disabled) {
+        transform: translateY(0px);
+    }
+
+    .add-artist-btn-stack:disabled {
+        cursor: not-allowed;
+        opacity: 0.7;
+    }
+
+.add-artist-btn-layer {
+    position: absolute;
+    width: 100%;
+    height: 48px;
+    /* border-radius: 8px; */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 500;
+    font-size: 1rem;
+    border: none;
+    transition: all 0.2s ease;
+    pointer-events: none;
+}
+
+.add-artist-layer-bottom {
+    background: #454543;
+    top: 6px;
+    left: 6px;
+    z-index: 1;
+}
+
+.add-artist-layer-middle {
+    background: #e3e3e3;
+    top: 3px;
+    left: 3px;
+    z-index: 2;
+}
+
+.add-artist-layer-top {
+    background: #C4C8D0;
+    color: black;
+    top: 0;
+    left: 0;
+    z-index: 3;
+    font-weight: 600;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.add-artist-btn-stack:hover:not(:disabled) .add-artist-layer-top {
+    transform: translate(-1px, -1px);
+}
+
+.add-artist-btn-stack:hover:not(:disabled) .add-artist-layer-middle {
+    transform: translate(-1px, -1px);
+}
+
+.add-artist-btn-stack:active:not(:disabled) .add-artist-layer-top {
+    transform: translate(2px, 2px);
+}
+
+.add-artist-btn-stack:active:not(:disabled) .add-artist-layer-middle {
+    transform: translate(1px, 1px);
+}
+
+.add-artist-btn-stack:disabled .add-artist-layer-top {
+    background: #6c757d;
+    color: #adb5bd;
+}
+
+.add-artist-btn-stack:disabled .add-artist-layer-middle {
+    background: #95a5a6;
+}
+
+.add-artist-btn-stack:disabled .add-artist-layer-bottom {
+    background: #5a6268;
+}
+
 /* Animations */
 @keyframes fadeInUp {
     from {

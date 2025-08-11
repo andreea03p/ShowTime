@@ -42,6 +42,7 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
+        padding: 20px;
     }
 
     .register-card {
@@ -57,7 +58,7 @@
     }
 
     .card-body {
-        padding: 30px;
+        padding: 20px;
     }
 
     .card-footer {
@@ -129,9 +130,9 @@
     /* Layered Button Styles */
     .login-btn-container {
         position: relative;
-        width: 100%;
+        width: 40%;
         height: 56px;
-        margin-top: 10px;
+        margin: 10px auto 0;
     }
 
     .login-btn-stack {
@@ -140,17 +141,20 @@
         transition: transform 0.2s ease;
         width: 100%;
         height: 100%;
+        border: none;
+        background: transparent;
+        padding: 0;
     }
 
-        .login-btn-stack:hover:not(.disabled) {
+        .login-btn-stack:hover:not(:disabled) {
             transform: translateY(-2px);
         }
 
-        .login-btn-stack:active:not(.disabled) {
+        .login-btn-stack:active:not(:disabled) {
             transform: translateY(0px);
         }
 
-        .login-btn-stack.disabled {
+        .login-btn-stack:disabled {
             cursor: not-allowed;
             opacity: 0.7;
         }
@@ -159,7 +163,7 @@
         position: absolute;
         width: 100%;
         height: 48px;
-        border-radius: 8px;
+        /* border-radius: 8px; */
         display: flex;
         align-items: center;
         justify-content: center;
@@ -167,6 +171,7 @@
         font-size: 1rem;
         border: none;
         transition: all 0.2s ease;
+        pointer-events: none;
     }
 
     .login-layer-bottom {
@@ -193,33 +198,33 @@
         text-shadow: 0 1px 2px rgba(0,0,0,0.1);
     }
 
-    .login-btn-stack:hover:not(.disabled) .login-layer-top {
+    .login-btn-stack:hover:not(:disabled) .login-layer-top {
         transform: translate(-1px, -1px);
     }
 
-    .login-btn-stack:hover:not(.disabled) .login-layer-middle {
+    .login-btn-stack:hover:not(:disabled) .login-layer-middle {
         transform: translate(-1px, -1px);
     }
 
-    .login-btn-stack:active:not(.disabled) .login-layer-top {
+    .login-btn-stack:active:not(:disabled) .login-layer-top {
         transform: translate(2px, 2px);
     }
 
-    .login-btn-stack:active:not(.disabled) .login-layer-middle {
+    .login-btn-stack:active:not(:disabled) .login-layer-middle {
         transform: translate(1px, 1px);
     }
 
-    .login-btn-stack.disabled .login-layer-top {
-        background: linear-gradient(135deg, #bdc3c7, #95a5a6);
-        color: #6c757d;
+    .login-btn-stack:disabled .login-layer-top {
+        background: #6c757d;
+        color: #adb5bd;
     }
 
-    .login-btn-stack.disabled .login-layer-middle {
-        background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+    .login-btn-stack:disabled .login-layer-middle {
+        background: #95a5a6;
     }
 
-    .login-btn-stack.disabled .login-layer-bottom {
-        background: linear-gradient(135deg, #6c757d, #5a6268);
+    .login-btn-stack:disabled .login-layer-bottom {
+        background: #5a6268;
     }
 
     .login-link {
@@ -310,11 +315,13 @@
                 </div>
 
                 <div class="login-btn-container">
-                    <div class="login-btn-stack" onclick="handleLogin()">
+                    <button type="submit" class="login-btn-stack">
                         <div class="login-btn-layer login-layer-bottom"></div>
                         <div class="login-btn-layer login-layer-middle"></div>
-                        <div class="login-btn-layer login-layer-top">Register</div>
-                    </div>
+                        <div class="login-btn-layer login-layer-top">
+                            <span>Register</span>
+                        </div>
+                    </button>
                 </div>
                 
             </EditForm>

@@ -311,6 +311,141 @@
             transform: translateY(-2px);
         }
 
+    /* Layered Button Styles */
+    .login-btn-container {
+        position: relative;
+        width: 100%;
+        height: 56px;
+    }
+
+    .button-group {
+        display: flex;
+        gap: 10px;
+        justify-content: left;
+        margin-top: 15px;
+        width: 100%;
+    }
+
+        .button-group > div {
+            flex: 1;
+            max-width: 150px; /* Limit button width for better appearance */
+        }
+
+    .login-btn-stack {
+        position: relative;
+        cursor: pointer;
+        transition: transform 0.2s ease;
+        width: 100%;
+        height: 100%;
+        border: none;
+        background: transparent;
+        padding: 0;
+    }
+
+        .login-btn-stack:hover:not(:disabled) {
+            transform: translateY(-2px);
+        }
+
+        .login-btn-stack:active:not(:disabled) {
+            transform: translateY(0px);
+        }
+
+        .login-btn-stack:disabled {
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+    .login-btn-layer {
+        position: absolute;
+        width: 100%;
+        height: 48px;
+        /* border-radius: 8px; */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 500;
+        font-size: 1rem;
+        border: none;
+        transition: all 0.2s ease;
+        pointer-events: none;
+    }
+
+    .login-layer-bottom {
+        background: #104F55;
+        top: 6px;
+        left: 6px;
+        z-index: 1;
+    }
+
+    .login-layer-middle {
+        background: #9EC5AB;
+        top: 3px;
+        left: 3px;
+        z-index: 2;
+    }
+
+    .login-layer-top {
+        background: #01200F;
+        color: white;
+        top: 0;
+        left: 0;
+        z-index: 3;
+        font-weight: 600;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+
+    .login-layer-top1 {
+        background: linear-gradient(135deg, #104F55, #1E3F20);
+        color: white;
+        top: 0;
+        left: 0;
+        z-index: 3;
+        font-weight: 600;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+
+    .login-btn-stack:hover:not(:disabled) .login-layer-top {
+        transform: translate(-1px, -1px);
+    }
+
+    .login-btn-stack:hover:not(:disabled) .login-layer-top1 {
+        transform: translate(-1px, -1px);
+    }
+
+    .login-btn-stack:hover:not(:disabled) .login-layer-middle {
+        transform: translate(-1px, -1px);
+    }
+
+    .login-btn-stack:active:not(:disabled) .login-layer-top {
+        transform: translate(2px, 2px);
+    }
+
+    .login-btn-stack:active:not(:disabled) .login-layer-top1 {
+        transform: translate(2px, 2px);
+    }
+
+    .login-btn-stack:active:not(:disabled) .login-layer-middle {
+        transform: translate(1px, 1px);
+    }
+
+    .login-btn-stack:disabled .login-layer-top {
+        background: #6c757d;
+        color: #adb5bd;
+    }
+
+    .login-btn-stack:disabled .login-layer-top1 {
+        background: #6c757d;
+        color: #adb5bd;
+    }
+
+    .login-btn-stack:disabled .login-layer-middle {
+        background: #95a5a6;
+    }
+
+    .login-btn-stack:disabled .login-layer-bottom {
+        background: #5a6268;
+    }
+
     @@keyframes shimmer {
         0%
 
@@ -365,18 +500,37 @@
                     </div>
                 </div>
 
-                <div style="text-align: left; margin-top: 20px;">
-                    <button class="btn-custom" @onclick="GoBack">
-                        <i class="bi bi-arrow-left"></i> Back to Festivals
-                    </button>
+                <div class="button-group">
+                    <div>
+                        <div class="login-btn-container">
+                            <button type="button" class="login-btn-stack" @onclick="GoBack">
+                                <div class="login-btn-layer login-layer-bottom"></div>
+                                <div class="login-btn-layer login-layer-middle"></div>
+                                <div class="login-btn-layer login-layer-top1">
+                                    <i class="bi bi-arrow-left"></i>
+                                    <span>Back to festivals</span>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
                     <AuthorizeView Roles="Admin">
-                        <Authorized Context="authContext">
-                    <button class="btn-custom" @onclick="GoToLineup">
-                        <i class="bi bi-pen"></i> Edit Lineup
-                    </button>
+                        <Authorized>
+                            <div>
+                                <div class="login-btn-container">
+                                    <button type="button" class="login-btn-stack" @onclick="GoToLineup">
+                                        <div class="login-btn-layer login-layer-bottom"></div>
+                                        <div class="login-btn-layer login-layer-middle"></div>
+                                        <div class="login-btn-layer login-layer-top">
+                                            <i class="bi bi-pen"></i>
+                                            <span>Edit lineup</span>
+                                        </div>
+                                    </button>
+                                </div>
+                            </div>
                         </Authorized>
                     </AuthorizeView>
                 </div>
+
             </div>
 
           @*   <!-- Stages Section -->
