@@ -453,6 +453,44 @@
         background: #5a6268;
     }
 
+        .search-section {
+        background: linear-gradient(135deg, rgba(0,0,0,0.8), rgba(255,255,255,0.1));
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+
+    .search-input {
+        width: 100%;
+        max-width: 400px;
+        margin: 0 auto;
+        display: block;
+        padding: 12px 20px;
+        border: 2px solid rgba(255,255,255,0.3);
+        border-radius: 25px;
+        background: rgba(255,255,255,0.9);
+        font-size: 16px;
+        transition: all 0.3s ease;
+        text-align: center;
+    }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #3498db;
+            background: rgba(255,255,255,1);
+            box-shadow: 0 0 20px rgba(52,152,219,0.3);
+            transform: scale(1.02);
+        }
+
+        .search-input::placeholder {
+            color: #666;
+            font-style: italic;
+        }
+
+
     @@keyframes shimmer {
         0% { background-position: -200% 0; }
         100% { background-position: 200% 0; }
@@ -490,6 +528,15 @@
             </Authorized>
         </AuthorizeView>
 
+        <!-- Search Section -->
+        <div class="search-section">
+            <input type="text"
+                   class="search-input"
+                   placeholder="Search festivals by name..."
+                   @bind="searchTerm"
+                   @oninput="OnSearchInput" />
+        </div>
+
         <div class="form-section">
             <h3>Festivals</h3>
             @if (festivals.Count == 0)
@@ -500,8 +547,35 @@
             }
             else
             {
+                @if (!string.IsNullOrEmpty(searchTerm) && displayedFestivals.Any())
+                {
+                    <div class="search-results-info">
+                        Found @displayedFestivals.Count() festival@(displayedFestivals.Count() == 1 ? "" : "s") matching "@searchTerm"
+                    </div>
+                }
+                else if (!string.IsNullOrEmpty(searchTerm) && !displayedFestivals.Any())
+                {
+                    <div class="search-results-info">
+                        No festivals found matching "@searchTerm"
+                    </div>
+                }
+
+                @if (displayedFestivals.Count() == 0)
+                {
+                    <div class="no-festivals">
+                        @if (string.IsNullOrEmpty(searchTerm))
+                        {
+                            <p>No festivals so far.</p>
+                        }
+                        else
+                        {
+                            <p>No festivals match your search criteria. Try searching for a different name.</p>
+                        }
+                    </div>
+                }
+
                 <div class="festivals-grid">
-                    @foreach (var fest in festivals)
+                    @foreach (var fest in displayedFestivals)
                     {
                         <div class="festival-card">
                             <img src="@fest.SplashArt" alt="@fest.Name" class="fest-image" />
@@ -579,10 +653,26 @@
     public bool IsUpdateFormValid => updateFormRef?.EditContext?.Validate() ?? false;
     public bool IsLineupFormValid => lineupFormRef?.EditContext?.Validate() ?? false;
 
+    private string searchTerm = "";
+    private IEnumerable<FestivalGetDto> displayedFestivals => GetFilteredFestivals();
+
+
     protected override async Task OnInitializedAsync()
     {
         festivals = await FestivalService.GetAllFestivalsAsync();
         artists = await ArtistService.GetAllArtistsAsync();
+    }
+
+    private IEnumerable<FestivalGetDto> GetFilteredFestivals()
+    {
+        if (string.IsNullOrEmpty(searchTerm))
+        {
+            return festivals;
+        }
+
+        return festivals.Where(a =>
+            a.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)
+        ).OrderBy(a => a.Name);
     }
 
     private async Task AddFestival()
@@ -732,6 +822,12 @@
     private void OnLineupFieldChanged()
     {
         lineupFormRef?.EditContext?.Validate();
+        StateHasChanged();
+    }
+
+    private void OnSearchInput(ChangeEventArgs e)
+    {
+        searchTerm = e.Value?.ToString() ?? "";
         StateHasChanged();
     }
 }
